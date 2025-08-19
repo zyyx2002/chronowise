@@ -1,20 +1,18 @@
 name: chronowise
-description: "A comprehensive health management Flutter application"
+description: "A new Flutter project."
 publish_to: 'none'
-
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.1.0 <4.0.0'
+  sdk: '>=3.4.3 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.6
-  provider: ^6.0.5
   shared_preferences: ^2.2.2
+  provider: ^6.1.1
   fl_chart: ^0.64.0
-  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
