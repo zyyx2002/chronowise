@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/health_data_provider.dart';
-import 'screens/home_screen.dart';
-import 'screens/statistics_screen.dart';
-import 'screens/smart_age_screen.dart';
+import 'providers/database_provider.dart';
+import 'screens/welcome_screen.dart';
+import 'screens/main_screen.dart'; // 确保这个文件存在
 
 void main() {
   runApp(const MyApp());
@@ -15,82 +14,63 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => HealthDataProvider(),
+      create: (context) => DatabaseProvider(),
       child: MaterialApp(
         title: 'ChronoWise',
+        theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+        home: const AppInitializer(),
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: const Color(0xFF667EEA),
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          fontFamily: 'SF Pro Display',
-        ),
-        home: const MainScreen(),
       ),
     );
   }
 }
 
-class MainScreen extends StatefulWidget {
-  const MainScreen({super.key});
+class AppInitializer extends StatefulWidget {
+  const AppInitializer({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  State<AppInitializer> createState() => _AppInitializerState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  int _currentIndex = 0;
+class _AppInitializerState extends State<AppInitializer> {
+  @override
+  void initState() {
+    super.initState();
+    _initializeApp();
+  }
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const SmartAgeScreen(),
-    const StatisticsScreen(),
-  ];
+  void _initializeApp() async {
+    final provider = Provider.of<DatabaseProvider>(context, listen: false);
+    await provider.initialize();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF667EEA),
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
-        elevation: 8,
-        selectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-        unselectedLabelStyle: const TextStyle(
-          fontWeight: FontWeight.w500,
-          fontSize: 12,
-        ),
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            activeIcon: Icon(Icons.home_rounded),
-            label: '首页',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.star_outline_rounded),
-            activeIcon: Icon(Icons.star_rounded),
-            label: '智龄',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_rounded),
-            activeIcon: Icon(Icons.bar_chart_rounded),
-            label: '统计',
-          ),
-        ],
-      ),
+    return Consumer<DatabaseProvider>(
+      builder: (context, provider, child) {
+        if (provider.isLoading) {
+          return const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('正在加载...'),
+                ],
+              ),
+            ),
+          );
+        }
+
+        // 如果没有用户，显示欢迎页面
+        if (!provider.hasUser) {
+          return const WelcomeScreen();
+        }
+
+        // 有用户，显示主界面
+        return const MainScreen();
+      },
     );
   }
 }
