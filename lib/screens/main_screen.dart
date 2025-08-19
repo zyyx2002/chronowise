@@ -5,6 +5,8 @@ import 'dashboard_screen.dart';
 import 'health_screen.dart';
 import 'tasks_screen.dart';
 import 'profile_screen.dart';
+import 'leaderboard_screen.dart';
+import 'community_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -21,6 +23,8 @@ class _MainScreenState extends State<MainScreen> {
     const DashboardScreen(),
     const HealthScreen(),
     const TasksScreen(),
+    const LeaderboardScreen(),
+    const CommunityScreen(),
     const ProfileScreen(),
   ];
 
@@ -28,6 +32,8 @@ class _MainScreenState extends State<MainScreen> {
     const BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: '仪表盘'),
     const BottomNavigationBarItem(icon: Icon(Icons.favorite), label: '健康'),
     const BottomNavigationBarItem(icon: Icon(Icons.task_alt), label: '任务'),
+    const BottomNavigationBarItem(icon: Icon(Icons.leaderboard), label: '排行'),
+    const BottomNavigationBarItem(icon: Icon(Icons.people), label: '社区'),
     const BottomNavigationBarItem(icon: Icon(Icons.person), label: '我的'),
   ];
 
