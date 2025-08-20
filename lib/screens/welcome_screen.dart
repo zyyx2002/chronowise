@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/database_provider.dart';
+import 'welcome_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -9,144 +10,556 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> {
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with TickerProviderStateMixin {
   final PageController _pageController = PageController();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+  late Animation<Offset> _slideAnimation;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _animationController,
+            curve: Curves.easeOutBack,
+          ),
+        );
+
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _animationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(
-        child: PageView(
-          controller: _pageController,
-          children: [
-            _buildWelcomePage(),
-            _buildFeaturePage(),
-            _buildUserSetupPage(),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFEBF4FF), Color(0xFFE0E7FF)],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  onPageChanged: (index) {
+                    setState(() {
+                      _currentPage = index;
+                    });
+                    _animationController.reset();
+                    _animationController.forward();
+                  },
+                  children: [
+                    _buildWelcomePage(),
+                    _buildFeaturePage(),
+                    _buildUserSetupPage(),
+                  ],
+                ),
+              ),
+              _buildPageIndicator(),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildWelcomePage() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.schedule, size: 120, color: Colors.blue),
-          const SizedBox(height: 32),
-          const Text(
-            '欢迎使用 ChronoWise',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-            textAlign: TextAlign.center,
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Logo with animation and effects
+              Hero(
+                tag: 'app_logo',
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 1000),
+                  builder: (context, value, child) {
+                    return Transform.rotate(
+                      angle: value * 0.1,
+                      child: Container(
+                        width: 160,
+                        height: 160,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Color(0xFF60A5FA), Color(0xFF3B82F6)],
+                          ),
+                          borderRadius: BorderRadius.circular(32),
+                          boxShadow: [
+                            BoxShadow(
+                              // ignore: deprecated_member_use
+                              color: Colors.blue.withOpacity(0.3),
+                              blurRadius: 20,
+                              offset: const Offset(0, 10),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.schedule,
+                          size: 80,
+                          color: Colors.white,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // Sparkle effect
+              Positioned(
+                top: -8,
+                right: -8,
+                child: Container(
+                  width: 32,
+                  height: 32,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFFBBF24),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Color(0x40FBBF24),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Text('✨', style: TextStyle(fontSize: 16)),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
+              const Text(
+                '欢迎使用 ChronoWise',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 16),
+
+              const Text(
+                '智能时间管理，让生活更有序',
+                style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
+                textAlign: TextAlign.center,
+              ),
+
+              const SizedBox(height: 64),
+
+              // Animated button
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.8, end: 1.0),
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.elasticOut,
+                builder: (context, scale, child) {
+                  return Transform.scale(
+                    scale: scale,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                        ),
+                        borderRadius: BorderRadius.circular(30),
+                        boxShadow: [
+                          BoxShadow(
+                            // ignore: deprecated_member_use
+                            color: Colors.blue.withOpacity(0.3),
+                            blurRadius: 15,
+                            offset: const Offset(0, 5),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(30),
+                          onTap: () {
+                            _pageController.nextPage(
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 48,
+                              vertical: 16,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '开始使用',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                SizedBox(width: 8),
+                                Icon(
+                                  Icons.arrow_forward,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          const Text(
-            '智能时间管理，让生活更有序',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 48),
-          ElevatedButton(
-            onPressed: () {
-              _pageController.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 16),
-            ),
-            child: const Text('开始使用'),
-          ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildFeaturePage() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Text(
-            '功能特色',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 32),
-          _buildFeatureItem(
-            icon: Icons.fitness_center,
-            title: '健康管理',
-            description: '记录运动、饮水、睡眠等健康数据',
-          ),
-          _buildFeatureItem(
-            icon: Icons.emoji_events,
-            title: '积分系统',
-            description: '完成任务获得积分，激励自己坚持',
-          ),
-          _buildFeatureItem(
-            icon: Icons.analytics,
-            title: '数据分析',
-            description: '可视化分析健康趋势和习惯',
-          ),
-          _buildFeatureItem(
-            icon: Icons.people,
-            title: '社区互动',
-            description: '与朋友分享成就，相互鼓励',
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: () {
-              _pageController.nextPage(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-              );
-            },
-            child: const Text('下一步'),
-          ),
-        ],
-      ),
-    );
-  }
+    final features = [
+      {
+        'icon': Icons.fitness_center,
+        'title': '健康管理',
+        'description': '记录运动、饮水、睡眠等健康数据',
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF34D399), Color(0xFF10B981)],
+        ),
+      },
+      {
+        'icon': Icons.emoji_events,
+        'title': '积分系统',
+        'description': '完成任务获得积分，激励自己坚持',
+        'gradient': const LinearGradient(
+          colors: [Color(0xFFFBBF24), Color(0xFFF59E0B)],
+        ),
+      },
+      {
+        'icon': Icons.analytics,
+        'title': '数据分析',
+        'description': '可视化分析健康趋势和习惯',
+        'gradient': const LinearGradient(
+          colors: [Color(0xFFA78BFA), Color(0xFF8B5CF6)],
+        ),
+      },
+      {
+        'icon': Icons.people,
+        'title': '社区互动',
+        'description': '与朋友分享成就，相互鼓励',
+        'gradient': const LinearGradient(
+          colors: [Color(0xFFF472B6), Color(0xFFEC4899)],
+        ),
+      },
+    ];
 
-  Widget _buildFeatureItem({
-    required IconData icon,
-    required String title,
-    required String description,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.blue, size: 32),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(description, style: const TextStyle(color: Colors.grey)),
-              ],
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const SizedBox(height: 40),
+            const Text(
+              '功能特色',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1F2937),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 32),
+
+            Expanded(
+              child: ListView.builder(
+                itemCount: features.length,
+                itemBuilder: (context, index) {
+                  return TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: Duration(milliseconds: 300 + (index * 100)),
+                    builder: (context, value, child) {
+                      return Transform.translate(
+                        offset: Offset(50 * (1 - value), 0),
+                        child: Opacity(
+                          opacity: value,
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: [
+                                BoxShadow(
+                                  // ignore: deprecated_member_use
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    gradient:
+                                        features[index]['gradient']
+                                            as LinearGradient,
+                                    borderRadius: BorderRadius.circular(12),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color:
+                                            (features[index]['gradient']
+                                                    as LinearGradient)
+                                                .colors
+                                                .first
+                                                // ignore: deprecated_member_use
+                                                .withOpacity(0.3),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    features[index]['icon'] as IconData,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        features[index]['title'] as String,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF1F2937),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        features[index]['description']
+                                            as String,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          color: Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            _buildGradientButton(
+              text: '下一步',
+              onPressed: () {
+                _pageController.nextPage(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildUserSetupPage() {
-    return const UserSetupForm();
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: SlideTransition(
+        position: _slideAnimation,
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              const Text(
+                '个人信息设置',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 32),
+
+              // 表单内容
+              Expanded(
+                child: Column(
+                  children: [
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: '姓名',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: '年龄',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      onPressed: () {
+                        // HomeScreen
+                        Navigator.pushReplacementNamed(context, '/home');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 48,
+                          vertical: 16,
+                        ),
+                      ),
+                      child: const Text('完成设置'),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGradientButton({
+    required String text,
+    required VoidCallback onPressed,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+        ),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            // ignore: deprecated_member_use
+            color: Colors.blue.withOpacity(0.3),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(30),
+          onTap: onPressed,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Icon(Icons.arrow_forward, color: Colors.white, size: 18),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPageIndicator() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(3, (index) {
+          return GestureDetector(
+            onTap: () {
+              _pageController.animateToPage(
+                index,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+              );
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: _currentPage == index ? 24 : 12,
+              height: 12,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                color: _currentPage == index
+                    ? const Color(0xFF3B82F6)
+                    : const Color(0xFFD1D5DB),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
   }
 }
 
+// UserSetupForm 保持之前的实现，但可以添加类似的美化效果
 class UserSetupForm extends StatefulWidget {
   const UserSetupForm({super.key});
 
@@ -155,219 +568,11 @@ class UserSetupForm extends StatefulWidget {
 }
 
 class _UserSetupFormState extends State<UserSetupForm> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _ageController = TextEditingController();
-  final _heightController = TextEditingController();
-  final _weightController = TextEditingController();
-
-  String _selectedGender = '男';
-  String _selectedGoal = '减重';
-  bool _isCreating = false;
-
-  final List<String> _genders = ['男', '女'];
-  final List<String> _goals = ['减重', '增肌', '保持健康', '提高体能'];
-
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(24),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            const Text(
-              '个人信息设置',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 32),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    TextFormField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: '姓名',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '请输入姓名';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _ageController,
-                      decoration: const InputDecoration(
-                        labelText: '年龄',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '请输入年龄';
-                        }
-                        final age = int.tryParse(value);
-                        if (age == null || age < 1 || age > 120) {
-                          return '请输入有效年龄';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: _selectedGender,
-                      decoration: const InputDecoration(
-                        labelText: '性别',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _genders.map((gender) {
-                        return DropdownMenuItem(
-                          value: gender,
-                          child: Text(gender),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedGender = value!;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _heightController,
-                      decoration: const InputDecoration(
-                        labelText: '身高 (cm)',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '请输入身高';
-                        }
-                        final height = double.tryParse(value);
-                        if (height == null || height < 50 || height > 250) {
-                          return '请输入有效身高';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _weightController,
-                      decoration: const InputDecoration(
-                        labelText: '体重 (kg)',
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return '请输入体重';
-                        }
-                        final weight = double.tryParse(value);
-                        if (weight == null || weight < 20 || weight > 300) {
-                          return '请输入有效体重';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      value: _selectedGoal,
-                      decoration: const InputDecoration(
-                        labelText: '健康目标',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: _goals.map((goal) {
-                        return DropdownMenuItem(value: goal, child: Text(goal));
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedGoal = value!;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isCreating ? null : _createUser,
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-                child: _isCreating
-                    ? const CircularProgressIndicator()
-                    : const Text('完成设置'),
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: const Center(child: Text('用户设置表单')),
     );
-  }
-
-  Future<void> _createUser() async {
-    // ✅ 修复了这一行的语法错误
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isCreating = true;
-    });
-
-    try {
-      final provider = Provider.of<DatabaseProvider>(context, listen: false);
-
-      final success = await provider.createUser(
-        name: _nameController.text,
-        age: int.parse(_ageController.text),
-        gender: _selectedGender,
-        height: double.parse(_heightController.text),
-        weight: double.parse(_weightController.text),
-        goal: _selectedGoal,
-      );
-
-      if (mounted) {
-        setState(() {
-          _isCreating = false;
-        });
-
-        if (success) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('用户创建成功！')));
-          // 导航到主页面
-          Navigator.pushReplacementNamed(context, '/dashboard');
-        } else {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('用户创建失败，请重试')));
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isCreating = false;
-        });
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('错误：$e')));
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _ageController.dispose();
-    _heightController.dispose();
-    _weightController.dispose();
-    super.dispose();
   }
 }
