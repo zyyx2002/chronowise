@@ -28,7 +28,9 @@ class CommunityScreen extends StatelessWidget {
                     ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 8),
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFF3B82F6),
                         borderRadius: BorderRadius.circular(8),
@@ -113,11 +115,7 @@ class CommunityScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.chat_bubble_outline,
-                color: Colors.white,
-                size: 24,
-              ),
+              Icon(Icons.chat_bubble_outline, color: Colors.white, size: 24),
               SizedBox(width: 12),
               Text(
                 '今日话题',
@@ -141,10 +139,7 @@ class CommunityScreen extends StatelessWidget {
           SizedBox(height: 8),
           Text(
             '已有 127 人参与讨论',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white70,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.white70),
           ),
         ],
       ),
@@ -221,7 +216,9 @@ class CommunityScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: userLevel == '专家'
                                 ? const Color(0xFFFBBF24)
@@ -267,10 +264,10 @@ class CommunityScreen extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.emoji_events, color: Colors.white, size: 20),
                       SizedBox(width: 8),
@@ -284,13 +281,10 @@ class CommunityScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     '坚持就是胜利！',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.white70,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.white70),
                   ),
                 ],
               ),
@@ -325,9 +319,7 @@ class CommunityScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.only(top: 12),
             decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(color: Color(0xFFF3F4F6)),
-              ),
+              border: Border(top: BorderSide(color: Color(0xFFF3F4F6))),
             ),
             child: Row(
               children: [

@@ -22,13 +22,13 @@ class DatabaseService {
       // Web 平台不支持 SQLite，返回 null
       return null;
     }
-    if (_database != null) return _database!;
+    if (_database != null) {return _database!;}
     _database = await _initDatabase();
     return _database!;
   }
 
   Future<SharedPreferences> get webStorage async {
-    if (_prefs != null) return _prefs!;
+    if (_prefs != null) {return _prefs!;}
     _prefs = await SharedPreferences.getInstance();
     return _prefs!;
   }
@@ -126,7 +126,7 @@ class DatabaseService {
 
   Future<int> _getNextWebId(String key) async {
     final data = await _getWebData(key);
-    if (data.isEmpty) return 1;
+    if (data.isEmpty) {return 1;}
     return (data
             .map((item) => item['id'] as int)
             .reduce((a, b) => a > b ? a : b)) +

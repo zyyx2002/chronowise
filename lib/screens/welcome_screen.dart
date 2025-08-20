@@ -313,36 +313,52 @@ class _UserSetupFormState extends State<UserSetupForm> {
     );
   }
 
-  void _createUser() async {
+  Future<void> _createUser() async {
+    // ✅ 修复了这一行的语法错误
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isCreating = true;
     });
 
-    final provider = Provider.of<DatabaseProvider>(context, listen: false);
+    try {
+      final provider = Provider.of<DatabaseProvider>(context, listen: false);
 
-    final success = await provider.createUser(
-      name: _nameController.text,
-      age: int.parse(_ageController.text),
-      gender: _selectedGender,
-      height: double.parse(_heightController.text),
-      weight: double.parse(_weightController.text),
-      goal: _selectedGoal,
-    );
+      final success = await provider.createUser(
+        name: _nameController.text,
+        age: int.parse(_ageController.text),
+        gender: _selectedGender,
+        height: double.parse(_heightController.text),
+        weight: double.parse(_weightController.text),
+        goal: _selectedGoal,
+      );
 
-    setState(() {
-      _isCreating = false;
-    });
+      if (mounted) {
+        setState(() {
+          _isCreating = false;
+        });
 
-    if (success && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('用户创建成功！')));
-    } else if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('用户创建失败，请重试')));
+        if (success) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('用户创建成功！')));
+          // 导航到主页面
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        } else {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('用户创建失败，请重试')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isCreating = false;
+        });
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('错误：$e')));
+      }
     }
   }
 

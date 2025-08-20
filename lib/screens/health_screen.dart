@@ -52,10 +52,13 @@ class HealthScreen extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [scoreColor.withOpacity(0.1), scoreColor.withOpacity(0.05)],
+          colors: [
+            scoreColor.withValues(alpha: 0.1),
+            scoreColor.withValues(alpha: 0.05),
+          ],
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: scoreColor.withOpacity(0.3)),
+        border: Border.all(color: scoreColor.withValues(alpha: 0.3)),
       ),
       child: Column(
         children: [
@@ -158,7 +161,7 @@ class HealthScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -169,7 +172,7 @@ class HealthScreen extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Colors.blue.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Icon(icon, color: Colors.blue),
@@ -201,7 +204,7 @@ class HealthScreen extends StatelessWidget {
             ),
             const SizedBox(width: 16),
             Text(
-              '$value',
+              value,
               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             Text(
@@ -226,9 +229,9 @@ class HealthScreen extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.05),
+            color: Colors.blue.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.blue.withOpacity(0.2)),
+            border: Border.all(color: Colors.blue.withValues(alpha: 0.2)),
           ),
           child: const Column(
             crossAxisAlignment: CrossAxisAlignment.start,

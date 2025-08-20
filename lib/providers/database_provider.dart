@@ -126,7 +126,7 @@ class DatabaseProvider extends ChangeNotifier {
     bool? skincare,
     int? nutritionScore,
   }) async {
-    if (_currentUser == null || _todayRecord == null) return false;
+    if (_currentUser == null || _todayRecord == null) {return false;}
 
     try {
       final updatedRecord = _todayRecord!.copyWith(
@@ -157,14 +157,14 @@ class DatabaseProvider extends ChangeNotifier {
 
   // 完成任务
   Future<bool> completeTask(int taskId) async {
-    if (_currentUser == null) return false;
+    if (_currentUser == null) {return false;}
 
     try {
       final taskIndex = _todayTasks.indexWhere((task) => task.id == taskId);
-      if (taskIndex == -1) return false;
+      if (taskIndex == -1) {return false;}
 
       final task = _todayTasks[taskIndex];
-      if (task.completed) return false;
+      if (task.completed) {return false;}
 
       final completedTask = task.copyWith(
         completed: true,
@@ -187,14 +187,14 @@ class DatabaseProvider extends ChangeNotifier {
 
   // 取消完成任务
   Future<bool> uncompleteTask(int taskId) async {
-    if (_currentUser == null) return false;
+    if (_currentUser == null) {return false;}
 
     try {
       final taskIndex = _todayTasks.indexWhere((task) => task.id == taskId);
-      if (taskIndex == -1) return false;
+      if (taskIndex == -1) {return false;}
 
       final task = _todayTasks[taskIndex];
-      if (!task.completed) return false;
+      if (!task.completed) {return false;}
 
       final uncompletedTask = task.copyWith(
         completed: false,
@@ -217,7 +217,7 @@ class DatabaseProvider extends ChangeNotifier {
 
   // 每日签到
   Future<bool> dailyCheckIn() async {
-    if (_currentUser == null) return false;
+    if (_currentUser == null) {return false;}
 
     try {
       // 检查今日是否已签到
@@ -248,7 +248,7 @@ class DatabaseProvider extends ChangeNotifier {
 
   // 获取历史健康记录
   Future<List<HealthRecord>> getHealthHistory({int days = 30}) async {
-    if (_currentUser == null) return [];
+    if (_currentUser == null) {return [];}
 
     try {
       return await _dbService.getHealthRecords(_currentUser!.id!, days: days);
@@ -260,7 +260,7 @@ class DatabaseProvider extends ChangeNotifier {
 
   // 重置当天数据（用于测试）
   Future<void> resetTodayData() async {
-    if (_currentUser == null) return;
+    if (_currentUser == null) {return;}
 
     try {
       _setLoading(true);
@@ -290,7 +290,7 @@ class DatabaseProvider extends ChangeNotifier {
   }
 
   Future<void> _loadTodayData() async {
-    if (_currentUser == null) return;
+    if (_currentUser == null) {return;}
 
     final today = DateTime.now();
     _todayRecord = await _dbService.getHealthRecord(_currentUser!.id!, today);
@@ -307,7 +307,7 @@ class DatabaseProvider extends ChangeNotifier {
   }
 
   Future<void> _createTodayRecord() async {
-    if (_currentUser == null) return;
+    if (_currentUser == null) {return;}
 
     final today = DateTime.now();
     final record = HealthRecord(
@@ -321,7 +321,7 @@ class DatabaseProvider extends ChangeNotifier {
   }
 
   Future<void> _createTodayTasks() async {
-    if (_currentUser == null) return;
+    if (_currentUser == null) {return;}
 
     final today = DateTime.now();
     final defaultTasks = [
@@ -390,7 +390,7 @@ class DatabaseProvider extends ChangeNotifier {
   }
 
   Future<void> _loadPointHistory() async {
-    if (_currentUser == null) return;
+    if (_currentUser == null) {return;}
     _pointHistory = await _dbService.getPointTransactions(
       _currentUser!.id!,
       limit: 50,
@@ -398,7 +398,7 @@ class DatabaseProvider extends ChangeNotifier {
   }
 
   Future<void> _loadTotalPoints() async {
-    if (_currentUser == null) return;
+    if (_currentUser == null) {return;}
     _totalPoints = await _dbService.getTotalPoints(_currentUser!.id!);
   }
 
@@ -460,7 +460,7 @@ class DatabaseProvider extends ChangeNotifier {
     required String type,
     required String description,
   }) async {
-    if (_currentUser == null) return;
+    if (_currentUser == null) {return;}
 
     final transaction = PointTransaction(
       userId: _currentUser!.id!,

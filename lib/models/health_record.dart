@@ -120,84 +120,70 @@ class HealthRecord {
     // 步数 (目标 8000)
     if (steps != null) {
       totalItems++;
-      if (steps! >= 8000)
+      if (steps! >= 8000) {
         score += 15;
-      else if (steps! >= 5000)
-        score += 10;
-      else if (steps! >= 3000)
-        score += 5;
+      } else if (steps! >= 5000) {score += 10;}
+      else if (steps! >= 3000) {score += 5;}
     }
 
     // 饮水 (目标 2.5L)
     if (water != null) {
       totalItems++;
-      if (water! >= 2.5)
+      if (water! >= 2.5) {
         score += 10;
-      else if (water! >= 2.0)
-        score += 7;
-      else if (water! >= 1.5)
-        score += 5;
+      } else if (water! >= 2.0) {score += 7;}
+      else if (water! >= 1.5) {score += 5;}
     }
 
     // 睡眠 (目标 8小时)
     if (sleepHours != null) {
       totalItems++;
-      if (sleepHours! >= 7 && sleepHours! <= 9)
+      if (sleepHours! >= 7 && sleepHours! <= 9) {
         score += 15;
-      else if (sleepHours! >= 6 && sleepHours! <= 10)
-        score += 10;
-      else if (sleepHours! >= 5)
-        score += 5;
+      } else if (sleepHours! >= 6 && sleepHours! <= 10) {score += 10;}
+      else if (sleepHours! >= 5) {score += 5;}
     }
 
     // 运动 (目标 30分钟)
     if (exerciseMinutes != null) {
       totalItems++;
-      if (exerciseMinutes! >= 30)
+      if (exerciseMinutes! >= 30) {
         score += 15;
-      else if (exerciseMinutes! >= 20)
-        score += 10;
-      else if (exerciseMinutes! >= 10)
-        score += 5;
+      } else if (exerciseMinutes! >= 20) {score += 10;}
+      else if (exerciseMinutes! >= 10) {score += 5;}
     }
 
     // 冥想 (目标 10分钟)
     if (meditationMinutes != null) {
       totalItems++;
-      if (meditationMinutes! >= 10)
+      if (meditationMinutes! >= 10) {
         score += 10;
-      else if (meditationMinutes! >= 5)
-        score += 7;
-      else if (meditationMinutes! > 0)
-        score += 3;
+      } else if (meditationMinutes! >= 5) {score += 7;}
+      else if (meditationMinutes! > 0) {score += 3;}
     }
 
     // 阅读 (目标 30分钟)
     if (readingMinutes != null) {
       totalItems++;
-      if (readingMinutes! >= 30)
+      if (readingMinutes! >= 30) {
         score += 10;
-      else if (readingMinutes! >= 15)
-        score += 7;
-      else if (readingMinutes! > 0)
-        score += 3;
+      } else if (readingMinutes! >= 15) {score += 7;}
+      else if (readingMinutes! > 0) {score += 3;}
     }
 
     // 社交 (目标有社交活动)
     if (socialMinutes != null) {
       totalItems++;
-      if (socialMinutes! >= 60)
+      if (socialMinutes! >= 60) {
         score += 10;
-      else if (socialMinutes! >= 30)
-        score += 7;
-      else if (socialMinutes! > 0)
-        score += 5;
+      } else if (socialMinutes! >= 30) {score += 7;}
+      else if (socialMinutes! > 0) {score += 5;}
     }
 
     // 护肤
     if (skincare != null) {
       totalItems++;
-      if (skincare!) score += 5;
+      if (skincare!) {score += 5;}
     }
 
     // 营养评分
@@ -207,7 +193,7 @@ class HealthRecord {
     }
 
     // 如果没有数据，返回0
-    if (totalItems == 0) return 0;
+    if (totalItems == 0) {return 0;}
 
     // 返回按比例计算的分数 (0-100)
     return (score * 100 / 100).clamp(0, 100).round();

@@ -90,7 +90,7 @@ class TasksScreen extends StatelessWidget {
           const SizedBox(height: 12),
           LinearProgressIndicator(
             value: progress,
-            backgroundColor: Colors.white.withOpacity(0.3),
+            backgroundColor: Colors.white.withValues(alpha: 0.3),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
           ),
           const SizedBox(height: 8),
@@ -111,13 +111,13 @@ class TasksScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
+            color: Colors.grey.withValues(alpha: 0.1),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
         border: task.completed
-            ? Border.all(color: Colors.green.withOpacity(0.3))
+            ? Border.all(color: Colors.green.withValues(alpha: 0.3))
             : null,
       ),
       child: ListTile(
@@ -127,8 +127,8 @@ class TasksScreen extends StatelessWidget {
           height: 48,
           decoration: BoxDecoration(
             color: task.completed
-                ? Colors.green.withOpacity(0.1)
-                : Colors.grey.withOpacity(0.1),
+                ? Colors.green.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
@@ -151,7 +151,7 @@ class TasksScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.emoji_events, size: 16, color: Colors.amber),
+                const Icon(Icons.emoji_events, size: 16, color: Colors.amber),
                 const SizedBox(width: 4),
                 Text(
                   '+${task.pointsReward} 积分',
@@ -168,8 +168,8 @@ class TasksScreen extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: task.completed
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.blue.withOpacity(0.1),
+                        ? Colors.green.withValues(alpha: 0.1)
+                        : Colors.blue.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

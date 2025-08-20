@@ -21,7 +21,7 @@ class StorageService {
   static Future<List<HealthData>> loadHealthData() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_healthDataKey);
-    if (jsonString == null) return [];
+    if (jsonString == null) {return [];}
 
     final jsonList = jsonDecode(jsonString) as List;
     return jsonList.map((json) => HealthData.fromJson(json)).toList();
@@ -37,7 +37,7 @@ class StorageService {
   static Future<List<Achievement>> loadAchievements() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = prefs.getString(_achievementsKey);
-    if (jsonString == null) return [];
+    if (jsonString == null) {return [];}
 
     final jsonList = jsonDecode(jsonString) as List;
     return jsonList.map((json) => Achievement.fromJson(json)).toList();

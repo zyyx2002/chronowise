@@ -66,13 +66,13 @@ class HealthDataProvider with ChangeNotifier {
 
   // 原有方法 - 获取最新数据
   HealthData? getLatestData() {
-    if (_healthDataList.isEmpty) return null;
+    if (_healthDataList.isEmpty) {return null;}
     return _healthDataList.last;
   }
 
   // 新增方法 - 智龄打卡
   Future<bool> completeTask(String taskId) async {
-    if (_todayCheckins[taskId] == true) return false;
+    if (_todayCheckins[taskId] == true) {return false;}
 
     _todayCheckins[taskId] = true;
 

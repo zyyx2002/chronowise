@@ -38,8 +38,10 @@ class LeaderboardScreen extends StatelessWidget {
                       final user = entry.value;
                       return Container(
                         margin: const EdgeInsets.only(bottom: 12),
-                        child:
-                            _buildLeaderboardItem(user, index == 3), // 第4位是用户自己
+                        child: _buildLeaderboardItem(
+                          user,
+                          index == 3,
+                        ), // 第4位是用户自己
                       );
                     }),
 
@@ -66,18 +68,15 @@ class LeaderboardScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 '我的排名',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.white70),
               ),
-              const SizedBox(height: 4),
-              const Text(
+              SizedBox(height: 4),
+              Text(
                 '#4',
                 style: TextStyle(
                   fontSize: 28,
@@ -85,12 +84,9 @@ class LeaderboardScreen extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
-              const Text(
+              Text(
                 '本周上升 2 位',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.white70),
               ),
             ],
           ),
@@ -99,10 +95,7 @@ class LeaderboardScreen extends StatelessWidget {
             children: [
               const Text(
                 '智龄币',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.white70),
               ),
               const SizedBox(height: 4),
               Text(
@@ -115,10 +108,7 @@ class LeaderboardScreen extends StatelessWidget {
               ),
               Text(
                 '生物年龄 ${provider.userProfile.biologicalAge}岁',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 14, color: Colors.white70),
               ),
             ],
           ),
@@ -143,11 +133,7 @@ class LeaderboardScreen extends StatelessWidget {
 
     Widget getRankIcon(int rank) {
       if (rank <= 3) {
-        return Icon(
-          Icons.emoji_events,
-          color: Colors.white,
-          size: 24,
-        );
+        return const Icon(Icons.emoji_events, color: Colors.white, size: 24);
       } else {
         return Text(
           '$rank',
@@ -213,7 +199,9 @@ class LeaderboardScreen extends StatelessWidget {
                       Container(
                         margin: const EdgeInsets.only(left: 8),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFF3B82F6),
                           borderRadius: BorderRadius.circular(4),

@@ -98,7 +98,7 @@ class Task {
 
   // 检查任务是否过期
   bool get isOverdue {
-    if (completed) return false;
+    if (completed) {return false;}
     final now = DateTime.now();
     return targetDate.isBefore(DateTime(now.year, now.month, now.day));
   }
