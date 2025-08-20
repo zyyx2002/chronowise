@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/app_state_provider.dart';
 
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({super.key});
@@ -6,158 +8,108 @@ class CommunityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        color: const Color(0xFFF9FAFB),
-        child: SafeArea(
-          child: SingleChildScrollView(
+      appBar: AppBar(
+        title: const Text('健康社区'),
+        backgroundColor: Colors.teal,
+        foregroundColor: Colors.white,
+      ),
+      body: Consumer<AppStateProvider>(
+        builder: (context, provider, child) {
+          return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 标题栏
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'The Circle',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF3B82F6),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.add, color: Colors.white, size: 16),
-                          SizedBox(width: 4),
-                          Text(
-                            '分享',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                _buildHeader(),
                 const SizedBox(height: 24),
-
-                // 今日话题
-                _buildDailyTopicCard(),
+                _buildStatsSection(provider),
                 const SizedBox(height: 24),
-
-                // 动态列表
-                _buildPostItem(
-                  userName: 'Alice',
-                  userLevel: 'Lv.5',
-                  timeAgo: '2小时前',
-                  hasAchievement: true,
-                  achievementText: '获得成就：连续打卡30天',
-                  content:
-                      '终于达成了30天连续打卡！这个月的变化真的很明显，\n皮肤状态好了很多，精神也更好了。感谢大家的鼓励和陪伴 💪',
-                  likes: 32,
-                  comments: 12,
-                  avatarColor: const LinearGradient(
-                    colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                _buildPostItem(
-                  userName: 'Dr.李教授',
-                  userLevel: '专家',
-                  timeAgo: '1天前',
-                  hasAchievement: false,
-                  content:
-                      '最新研究表明，每天15分钟的冥想练习可以有效降低皮质醇水平，\n延缓细胞衰老进程。冥想不仅能减压，还能激活端粒酶活性。',
-                  contentTitle: '🧠 抗衰老科学小贴士',
-                  likes: 128,
-                  comments: 45,
-                  avatarIcon: Icons.star,
-                  avatarColor: const LinearGradient(
-                    colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
-                  ),
-                ),
-
-                const SizedBox(height: 100), // 底部导航空间
+                _buildAchievementSection(provider),
+                const SizedBox(height: 24),
+                _buildCommunityPosts(),
               ],
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildDailyTopicCard() {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
-        ),
+        gradient: const LinearGradient(colors: [Colors.teal, Colors.cyan]),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: const Row(
         children: [
-          Row(
-            children: [
-              Icon(Icons.chat_bubble_outline, color: Colors.white, size: 24),
-              SizedBox(width: 12),
-              Text(
-                '今日话题',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+          Icon(Icons.groups, color: Colors.white, size: 32),
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '健康社区',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
-          Text(
-            '分享你的抗衰老小秘诀 ✨',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+                SizedBox(height: 4),
+                Text(
+                  '分享健康心得，互相鼓励进步',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
+                ),
+              ],
             ),
-          ),
-          SizedBox(height: 8),
-          Text(
-            '已有 127 人参与讨论',
-            style: TextStyle(fontSize: 14, color: Colors.white70),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildPostItem({
-    required String userName,
-    required String userLevel,
-    required String timeAgo,
-    required String content,
-    String? contentTitle,
-    bool hasAchievement = false,
-    String? achievementText,
-    required int likes,
-    required int comments,
-    IconData? avatarIcon,
-    required Gradient avatarColor,
+  Widget _buildStatsSection(AppStateProvider provider) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '我的社区数据',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                icon: Icons.timeline,
+                title: '连续天数',
+                value: '${provider.userProfile.streakDays}',
+                color: Colors.green,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildStatCard(
+                icon: Icons.calendar_today,
+                title: '总天数',
+                value: '${provider.userProfile.totalDays}',
+                color: Colors.blue,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard({
+    required IconData icon,
+    required String title,
+    required String value,
+    required Color color,
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -166,203 +118,231 @@ class CommunityScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.grey.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 32),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          ),
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAchievementSection(AppStateProvider provider) {
+    final achievements = provider.achievements;
+    final unlockedCount = achievements.where((a) => a.unlocked).length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text(
+              '成就徽章',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              '$unlockedCount/${achievements.length}',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 1,
+            ),
+            itemCount: achievements.length,
+            itemBuilder: (context, index) {
+              final achievement = achievements[index];
+              return _buildAchievementItem(achievement);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAchievementItem(Achievement achievement) {
+    return Column(
+      children: [
+        Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: achievement.unlocked
+                ? Colors.orange.withValues(alpha: 0.1)
+                : Colors.grey.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: Center(
+            child: Text(
+              achievement.icon,
+              style: TextStyle(
+                fontSize: 24,
+                color: achievement.unlocked ? null : Colors.grey,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          achievement.name,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: achievement.unlocked ? null : Colors.grey,
+          ),
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCommunityPosts() {
+    final posts = [
+      {
+        'avatar': '🧘‍♀️',
+        'name': '冥想达人',
+        'time': '2小时前',
+        'content': '今天完成了30分钟冥想，感觉内心特别平静。推荐大家试试呼吸冥想法！',
+        'likes': 24,
+        'comments': 8,
+      },
+      {
+        'avatar': '🏃‍♂️',
+        'name': '跑步小王',
+        'time': '4小时前',
+        'content': '早起跑步10公里，看到美丽的日出。运动真的能让人心情愉悦！',
+        'likes': 35,
+        'comments': 12,
+      },
+      {
+        'avatar': '🥗',
+        'name': '健康饮食家',
+        'time': '6小时前',
+        'content': '分享今天的营养早餐：牛油果吐司+坚果+水果。简单营养又美味！',
+        'likes': 18,
+        'comments': 5,
+      },
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '社区动态',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: posts.length,
+          itemBuilder: (context, index) {
+            final post = posts[index];
+            return _buildPostCard(post);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPostCard(Map<String, dynamic> post) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 用户信息
           Row(
             children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient: avatarColor,
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: avatarIcon != null
-                      ? Icon(avatarIcon, color: Colors.white, size: 24)
-                      : Text(
-                          userName[0].toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                ),
+              CircleAvatar(
+                backgroundColor: Colors.blue.withValues(alpha: 0.1),
+                child: Text(post['avatar']),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Text(
-                          userName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: userLevel == '专家'
-                                ? const Color(0xFFFBBF24)
-                                : const Color(0xFFF3F4F6),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            userLevel,
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: userLevel == '专家'
-                                  ? Colors.white
-                                  : const Color(0xFF6B7280),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
                     Text(
-                      timeAgo,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6B7280),
-                      ),
+                      post['name'],
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      post['time'],
+                      style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-
-          // 成就展示
-          if (hasAchievement && achievementText != null)
-            Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF10B981), Color(0xFF3B82F6)],
-                ),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.emoji_events, color: Colors.white, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        '获得成就：连续打卡30天',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    '坚持就是胜利！',
-                    style: TextStyle(fontSize: 14, color: Colors.white70),
-                  ),
-                ],
-              ),
-            ),
-
-          // 内容标题
-          if (contentTitle != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Text(
-                contentTitle,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
-                ),
-              ),
-            ),
-
-          // 内容
-          Text(
-            content,
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF374151),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // 互动按钮
-          Container(
-            padding: const EdgeInsets.only(top: 12),
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Color(0xFFF3F4F6))),
-            ),
-            child: Row(
-              children: [
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.thumb_up_outlined,
-                      size: 16,
-                      color: Color(0xFF6B7280),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$likes',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 24),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.chat_bubble_outline,
-                      size: 16,
-                      color: Color(0xFF6B7280),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$comments',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+          const SizedBox(height: 12),
+          Text(post['content']),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildPostAction(Icons.favorite_border, '${post['likes']}'),
+              const SizedBox(width: 24),
+              _buildPostAction(Icons.comment_outlined, '${post['comments']}'),
+            ],
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPostAction(IconData icon, String count) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.grey),
+        const SizedBox(width: 4),
+        Text(count, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+      ],
     );
   }
 }

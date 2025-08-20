@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/database_provider.dart';
+import 'providers/app_state_provider.dart';
 import 'screens/welcome_screen.dart';
-import 'screens/main_screen.dart'; // 确保这个文件存在
+import 'screens/main_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => DatabaseProvider(),
+      create: (context) => AppStateProvider(),
       child: MaterialApp(
         title: 'ChronoWise',
         theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
@@ -25,28 +25,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AppInitializer extends StatefulWidget {
+class AppInitializer extends StatelessWidget {
   const AppInitializer({super.key});
 
   @override
-  State<AppInitializer> createState() => _AppInitializerState();
-}
-
-class _AppInitializerState extends State<AppInitializer> {
-  @override
-  void initState() {
-    super.initState();
-    _initializeApp();
-  }
-
-  void _initializeApp() async {
-    final provider = Provider.of<DatabaseProvider>(context, listen: false);
-    await provider.initialize();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Consumer<DatabaseProvider>(
+    return Consumer<AppStateProvider>(
       builder: (context, provider, child) {
         if (provider.isLoading) {
           return const Scaffold(
@@ -54,21 +38,40 @@ class _AppInitializerState extends State<AppInitializer> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Logo
+                  Icon(Icons.schedule, size: 80, color: Colors.blue),
+                  SizedBox(height: 24),
+                  Text(
+                    'ChronoWise',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    '智能时间管理，让生活更有序',
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
+                  SizedBox(height: 32),
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text('正在加载...'),
+                  Text(
+                    '正在初始化...',
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
+                  ),
                 ],
               ),
             ),
           );
         }
 
-        // 如果没有用户，显示欢迎页面
+        // 根据用户状态决定显示哪个页面
         if (!provider.hasUser) {
           return const WelcomeScreen();
         }
 
-        // 有用户，显示主界面
         return const MainScreen();
       },
     );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/database_provider.dart';
+import '../providers/app_state_provider.dart';
 
 class HealthScreen extends StatelessWidget {
   const HealthScreen({super.key});
@@ -13,7 +13,7 @@ class HealthScreen extends StatelessWidget {
         backgroundColor: Colors.red,
         foregroundColor: Colors.white,
       ),
-      body: Consumer<DatabaseProvider>(
+      body: Consumer<AppStateProvider>(
         builder: (context, provider, child) {
           final record = provider.todayRecord;
 
@@ -90,7 +90,7 @@ class HealthScreen extends StatelessWidget {
 
   Widget _buildHealthMetrics(
     BuildContext context,
-    DatabaseProvider provider,
+    AppStateProvider provider,
     record,
   ) {
     return Column(
@@ -104,7 +104,7 @@ class HealthScreen extends StatelessWidget {
         _buildMetricCard(
           icon: Icons.directions_walk,
           title: '步数',
-          value: record?.steps?.toString() ?? '0',
+          value: provider.todaySteps.toString(),
           unit: '步',
           target: '8000',
           onTap: () => _showStepsDialog(context, provider),
@@ -113,7 +113,7 @@ class HealthScreen extends StatelessWidget {
         _buildMetricCard(
           icon: Icons.water_drop,
           title: '饮水',
-          value: record?.water?.toString() ?? '0',
+          value: provider.todayWater.toStringAsFixed(1),
           unit: 'L',
           target: '2.5',
           onTap: () => _showWaterDialog(context, provider),
@@ -122,7 +122,7 @@ class HealthScreen extends StatelessWidget {
         _buildMetricCard(
           icon: Icons.bedtime,
           title: '睡眠',
-          value: record?.sleepHours?.toString() ?? '0',
+          value: provider.todaySleep.toString(),
           unit: '小时',
           target: '8',
           onTap: () => _showSleepDialog(context, provider),
@@ -131,7 +131,7 @@ class HealthScreen extends StatelessWidget {
         _buildMetricCard(
           icon: Icons.fitness_center,
           title: '运动',
-          value: record?.exerciseMinutes?.toString() ?? '0',
+          value: provider.todayExercise.toString(),
           unit: '分钟',
           target: '30',
           onTap: () => _showExerciseDialog(context, provider),
@@ -258,7 +258,7 @@ class HealthScreen extends StatelessWidget {
     );
   }
 
-  void _showStepsDialog(BuildContext context, DatabaseProvider provider) {
+  void _showStepsDialog(BuildContext context, AppStateProvider provider) {
     final controller = TextEditingController();
 
     showDialog(
@@ -298,7 +298,7 @@ class HealthScreen extends StatelessWidget {
     );
   }
 
-  void _showWaterDialog(BuildContext context, DatabaseProvider provider) {
+  void _showWaterDialog(BuildContext context, AppStateProvider provider) {
     final controller = TextEditingController();
 
     showDialog(
@@ -338,7 +338,7 @@ class HealthScreen extends StatelessWidget {
     );
   }
 
-  void _showSleepDialog(BuildContext context, DatabaseProvider provider) {
+  void _showSleepDialog(BuildContext context, AppStateProvider provider) {
     final controller = TextEditingController();
 
     showDialog(
@@ -378,7 +378,7 @@ class HealthScreen extends StatelessWidget {
     );
   }
 
-  void _showExerciseDialog(BuildContext context, DatabaseProvider provider) {
+  void _showExerciseDialog(BuildContext context, AppStateProvider provider) {
     final controller = TextEditingController();
 
     showDialog(

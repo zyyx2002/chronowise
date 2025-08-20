@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/database_provider.dart';
+import '../providers/app_state_provider.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -10,7 +10,7 @@ class DashboardScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
-        child: Consumer<DatabaseProvider>(
+        child: Consumer<AppStateProvider>(
           builder: (context, provider, child) {
             final user = provider.currentUser;
             if (user == null) {
@@ -40,7 +40,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(String userName, DatabaseProvider provider) {
+  Widget _buildHeader(String userName, AppStateProvider provider) {
     final now = DateTime.now();
     final hour = now.hour;
     String greeting = '';
@@ -111,7 +111,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildStatsCards(DatabaseProvider provider) {
+  Widget _buildStatsCards(AppStateProvider provider) {
     return Row(
       children: [
         Expanded(
@@ -169,7 +169,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, DatabaseProvider provider) {
+  Widget _buildQuickActions(BuildContext context, AppStateProvider provider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -271,7 +271,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTodayProgress(DatabaseProvider provider) {
+  Widget _buildTodayProgress(AppStateProvider provider) {
     final tasks = provider.todayTasks;
     final completedTasks = tasks.where((task) => task.completed).toList();
     final progress = tasks.isNotEmpty
@@ -364,7 +364,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentActivity(DatabaseProvider provider) {
+  Widget _buildRecentActivity(AppStateProvider provider) {
     final recentTransactions = provider.pointHistory.take(5).toList();
 
     return Column(
@@ -431,7 +431,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  void _showWaterDialog(BuildContext context, DatabaseProvider provider) {
+  void _showWaterDialog(BuildContext context, AppStateProvider provider) {
     final controller = TextEditingController();
 
     showDialog(
@@ -455,7 +455,9 @@ class DashboardScreen extends StatelessWidget {
             onPressed: () async {
               final water = double.tryParse(controller.text);
               if (water != null && water > 0) {
-                await provider.updateHealthData(water: water);
+                await provider.updateHealthData(
+                  water: provider.todayWater + water,
+                );
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(
@@ -471,7 +473,7 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  void _showExerciseDialog(BuildContext context, DatabaseProvider provider) {
+  void _showExerciseDialog(BuildContext context, AppStateProvider provider) {
     final controller = TextEditingController();
 
     showDialog(
@@ -495,7 +497,9 @@ class DashboardScreen extends StatelessWidget {
             onPressed: () async {
               final minutes = int.tryParse(controller.text);
               if (minutes != null && minutes > 0) {
-                await provider.updateHealthData(exerciseMinutes: minutes);
+                await provider.updateHealthData(
+                  exerciseMinutes: provider.todayExercise + minutes,
+                );
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(

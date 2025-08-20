@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/database_provider.dart';
+import '../providers/app_state_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -13,7 +13,7 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: Colors.purple,
         foregroundColor: Colors.white,
       ),
-      body: Consumer<DatabaseProvider>(
+      body: Consumer<AppStateProvider>(
         builder: (context, provider, child) {
           final user = provider.currentUser;
           if (user == null) {
@@ -21,15 +21,14 @@ class ProfileScreen extends StatelessWidget {
           }
 
           return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 _buildUserHeader(user, provider),
                 const SizedBox(height: 24),
-                _buildStatsSection(provider),
+                _buildStatsCards(provider),
                 const SizedBox(height: 24),
-                _buildMenuSection(context, provider),
-                const SizedBox(height: 24),
-                _buildAboutSection(),
+                _buildSettingsSection(context, provider),
               ],
             ),
           );
@@ -38,22 +37,24 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserHeader(user, DatabaseProvider provider) {
+  Widget _buildUserHeader(UserItem user, AppStateProvider provider) {
     return Container(
-      width: double.infinity,
       padding: const EdgeInsets.all(24),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Colors.purple, Colors.deepPurple]),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Colors.purple, Colors.deepPurple],
+        ),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
           CircleAvatar(
-            radius: 40,
+            radius: 50,
             backgroundColor: Colors.white,
             child: Text(
               user.name.isNotEmpty ? user.name[0].toUpperCase() : 'U',
               style: const TextStyle(
-                fontSize: 32,
+                fontSize: 36,
                 fontWeight: FontWeight.bold,
                 color: Colors.purple,
               ),
@@ -70,94 +71,40 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${user.age}岁 • ${user.gender} • ${user.goal}',
+            '等级 ${provider.userProfile.level}',
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.emoji_events, color: Colors.amber, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  '${provider.totalPoints} 积分',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+          const SizedBox(height: 8),
+          Text(
+            '已使用 ${provider.userProfile.totalDays} 天',
+            style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatsSection(DatabaseProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '我的数据',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+  Widget _buildStatsCards(AppStateProvider provider) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            icon: Icons.emoji_events,
+            title: '智币',
+            value: '${provider.userProfile.smartCoins}',
+            color: Colors.orange,
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.emoji_events,
-                  title: '总积分',
-                  value: '${provider.totalPoints}',
-                  color: Colors.amber,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.favorite,
-                  title: '健康得分',
-                  value: '${provider.todayHealthScore}',
-                  color: Colors.red,
-                ),
-              ),
-            ],
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: _buildStatCard(
+            icon: Icons.trending_down,
+            title: '生物年龄',
+            value: '${provider.userProfile.biologicalAge}岁',
+            color: Colors.green,
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.task_alt,
-                  title: '今日任务',
-                  value:
-                      '${provider.completedTasksToday}/${provider.totalTasksToday}',
-                  color: Colors.green,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.calendar_today,
-                  title: '使用天数',
-                  value:
-                      '${DateTime.now().difference(provider.currentUser!.createdAt).inDays + 1}',
-                  color: Colors.blue,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -188,193 +135,176 @@ class ProfileScreen extends StatelessWidget {
             value,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          Text(
-            title,
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
-            textAlign: TextAlign.center,
-          ),
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 12)),
         ],
       ),
     );
   }
 
-  Widget _buildMenuSection(BuildContext context, DatabaseProvider provider) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '设置',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+  Widget _buildSettingsSection(
+    BuildContext context,
+    AppStateProvider provider,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '设置',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.grey.withValues(alpha: 0.1),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                _buildMenuItem(
-                  icon: Icons.person,
-                  title: '个人信息',
-                  onTap: () => _showEditProfileDialog(context, provider),
-                ),
-                const Divider(height: 1),
-                _buildMenuItem(
-                  icon: Icons.history,
-                  title: '积分历史',
-                  onTap: () => _showPointsHistory(context, provider),
-                ),
-                const Divider(height: 1),
-                _buildMenuItem(
-                  icon: Icons.refresh,
-                  title: '重置今日数据',
-                  onTap: () => _showResetDialog(context, provider),
-                ),
-                const Divider(height: 1),
-                _buildMenuItem(
-                  icon: Icons.settings,
-                  title: '应用设置',
-                  onTap: () {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(const SnackBar(content: Text('功能开发中...')));
-                  },
-                ),
-              ],
-            ),
+          child: Column(
+            children: [
+              _buildSettingItem(
+                icon: Icons.person,
+                title: '个人信息',
+                onTap: () => _showEditProfileDialog(context, provider),
+              ),
+              const Divider(height: 1),
+              _buildSettingItem(
+                icon: Icons.history,
+                title: '积分历史',
+                onTap: () => _showPointHistoryDialog(context, provider),
+              ),
+              const Divider(height: 1),
+              _buildSettingItem(
+                icon: Icons.refresh,
+                title: '重置今日数据',
+                onTap: () => _showResetDialog(context, provider),
+              ),
+              const Divider(height: 1),
+              _buildSettingItem(
+                icon: Icons.info,
+                title: '关于应用',
+                onTap: () => _showAboutDialog(context),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
-  Widget _buildMenuItem({
+  Widget _buildSettingItem({
     required IconData icon,
     required String title,
     required VoidCallback onTap,
   }) {
     return ListTile(
-      leading: Icon(icon, color: Colors.grey[600]),
+      leading: Icon(icon, color: Colors.purple),
       title: Text(title),
       trailing: const Icon(Icons.chevron_right, color: Colors.grey),
       onTap: onTap,
     );
   }
 
-  Widget _buildAboutSection() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Column(
-          children: [
-            Text(
-              'ChronoWise',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Text('v1.0.0', style: TextStyle(color: Colors.grey)),
-            SizedBox(height: 8),
-            Text(
-              '智能时间管理，让生活更有序',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
+  void _showEditProfileDialog(BuildContext context, AppStateProvider provider) {
+    final nameController = TextEditingController(
+      text: provider.userProfile.name,
     );
-  }
-
-  void _showEditProfileDialog(BuildContext context, DatabaseProvider provider) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('个人信息编辑功能开发中...')));
-  }
-
-  void _showPointsHistory(BuildContext context, DatabaseProvider provider) {
-    final transactions = provider.pointHistory;
+    final ageController = TextEditingController(text: provider.userProfile.age);
 
     showDialog(
       context: context,
-      builder: (context) => Dialog(
-        child: Container(
-          height: 400,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              const Text(
-                '积分历史',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              Expanded(
-                child: transactions.isEmpty
-                    ? const Center(child: Text('暂无积分记录'))
-                    : ListView.builder(
-                        itemCount: transactions.length,
-                        itemBuilder: (context, index) {
-                          final transaction = transactions[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: transaction.isPositive
-                                  ? Colors.green.withValues(alpha: 0.1)
-                                  : Colors.red.withValues(alpha: 0.1),
-                              child: Icon(
-                                transaction.isPositive
-                                    ? Icons.add
-                                    : Icons.remove,
-                                color: transaction.isPositive
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                            ),
-                            title: Text(transaction.description),
-                            subtitle: Text(transaction.typeDisplay),
-                            trailing: Text(
-                              transaction.pointsDisplay,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: transaction.isPositive
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('关闭'),
-                ),
-              ),
-            ],
-          ),
+      builder: (context) => AlertDialog(
+        title: const Text('编辑个人信息'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: '姓名'),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ageController,
+              decoration: const InputDecoration(labelText: '年龄'),
+              keyboardType: TextInputType.number,
+            ),
+          ],
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () {
+              provider.updateUserName(nameController.text);
+              provider.updateUserAge(ageController.text);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('个人信息已更新')));
+            },
+            child: const Text('保存'),
+          ),
+        ],
       ),
     );
   }
 
-  void _showResetDialog(BuildContext context, DatabaseProvider provider) {
+  void _showPointHistoryDialog(
+    BuildContext context,
+    AppStateProvider provider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('积分历史'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: 300,
+          child: ListView.builder(
+            itemCount: provider.pointHistory.length,
+            itemBuilder: (context, index) {
+              final transaction = provider.pointHistory[index];
+              return ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: transaction.isPositive
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.red.withValues(alpha: 0.1),
+                  child: Icon(
+                    transaction.isPositive ? Icons.add : Icons.remove,
+                    color: transaction.isPositive ? Colors.green : Colors.red,
+                  ),
+                ),
+                title: Text(transaction.description),
+                subtitle: Text(transaction.typeDisplay),
+                trailing: Text(
+                  transaction.pointsDisplay,
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: transaction.isPositive ? Colors.green : Colors.red,
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('关闭'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showResetDialog(BuildContext context, AppStateProvider provider) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -395,7 +325,37 @@ class ProfileScreen extends StatelessWidget {
                 ).showSnackBar(const SnackBar(content: Text('今日数据已重置')));
               }
             },
-            child: const Text('确定', style: TextStyle(color: Colors.red)),
+            child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('关于 ChronoWise'),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('版本: 1.0.0'),
+            SizedBox(height: 8),
+            Text('ChronoWise 是一款智能健康管理应用，帮助您建立健康的生活习惯。'),
+            SizedBox(height: 8),
+            Text('功能特色：'),
+            Text('• 健康数据跟踪'),
+            Text('• 任务打卡系统'),
+            Text('• 积分奖励机制'),
+            Text('• 社区互动交流'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('确定'),
           ),
         ],
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/database_provider.dart';
+import '../providers/app_state_provider.dart';
 
 class TasksScreen extends StatelessWidget {
   const TasksScreen({super.key});
@@ -13,29 +13,66 @@ class TasksScreen extends StatelessWidget {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
       ),
-      body: Consumer<DatabaseProvider>(
+      body: Consumer<AppStateProvider>(
         builder: (context, provider, child) {
           final tasks = provider.todayTasks;
-
-          if (tasks.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.task_alt, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('暂无任务'),
-                ],
-              ),
-            );
-          }
+          final completedCount = provider.completedTasksToday;
+          final totalCount = provider.totalTasksToday;
 
           return Column(
             children: [
-              _buildTasksHeader(provider),
+              // 进度卡片
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Colors.green, Colors.lightGreen],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            '今日进度',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '$completedCount / $totalCount 已完成',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    CircularProgressIndicator(
+                      value: totalCount > 0 ? completedCount / totalCount : 0,
+                      backgroundColor: Colors.white.withValues(alpha: 0.3),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.white,
+                      ),
+                      strokeWidth: 6,
+                    ),
+                  ],
+                ),
+              ),
+
+              // 任务列表
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: tasks.length,
                   itemBuilder: (context, index) {
                     final task = tasks[index];
@@ -50,60 +87,11 @@ class TasksScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTasksHeader(DatabaseProvider provider) {
-    final completedCount = provider.completedTasksToday;
-    final totalCount = provider.totalTasksToday;
-    final progress = totalCount > 0 ? completedCount / totalCount : 0.0;
-
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.green, Colors.lightGreen],
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                '今日进度',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                '$completedCount/$totalCount',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          LinearProgressIndicator(
-            value: progress,
-            backgroundColor: Colors.white.withValues(alpha: 0.3),
-            valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${(progress * 100).toInt()}% 完成',
-            style: const TextStyle(color: Colors.white70, fontSize: 14),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTaskCard(BuildContext context, task, DatabaseProvider provider) {
+  Widget _buildTaskCard(
+    BuildContext context,
+    TaskItem task,
+    AppStateProvider provider,
+  ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
@@ -116,20 +104,17 @@ class TasksScreen extends StatelessWidget {
             offset: const Offset(0, 2),
           ),
         ],
-        border: task.completed
-            ? Border.all(color: Colors.green.withValues(alpha: 0.3))
-            : null,
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: Container(
-          width: 48,
-          height: 48,
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
             color: task.completed
                 ? Colors.green.withValues(alpha: 0.1)
                 : Colors.grey.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(25),
           ),
           child: Center(
             child: Text(task.iconData, style: const TextStyle(fontSize: 24)),
@@ -151,34 +136,13 @@ class TasksScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.emoji_events, size: 16, color: Colors.amber),
+                Icon(Icons.emoji_events, size: 16, color: Colors.orange),
                 const SizedBox(width: 4),
                 Text(
                   '+${task.pointsReward} 积分',
                   style: const TextStyle(
-                    color: Colors.amber,
+                    color: Colors.orange,
                     fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: task.completed
-                        ? Colors.green.withValues(alpha: 0.1)
-                        : Colors.blue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    task.statusDisplay,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: task.completed ? Colors.green : Colors.blue,
-                      fontWeight: FontWeight.w500,
-                    ),
                   ),
                 ),
               ],
@@ -189,19 +153,17 @@ class TasksScreen extends StatelessWidget {
           value: task.completed,
           onChanged: (value) async {
             if (value == true) {
-              final success = await provider.completeTask(task.id!);
-              if (success && context.mounted) {
+              final success = await provider.completeTask(task.id);
+              if (context.mounted && success) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('任务完成！获得 ${task.pointsReward} 积分')),
+                  SnackBar(
+                    content: Text('任务完成！获得 ${task.pointsReward} 积分'),
+                    backgroundColor: Colors.green,
+                  ),
                 );
               }
             } else {
-              final success = await provider.uncompleteTask(task.id!);
-              if (success && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('任务取消，扣除 ${task.pointsReward} 积分')),
-                );
-              }
+              await provider.uncompleteTask(task.id);
             }
           },
           activeColor: Colors.green,

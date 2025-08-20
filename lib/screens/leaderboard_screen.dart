@@ -7,254 +7,277 @@ class LeaderboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppStateProvider>(
-      builder: (context, provider, child) {
-        return Scaffold(
-          body: Container(
-            color: const Color(0xFFF9FAFB),
-            child: SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      '智龄榜',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('排行榜'),
+        backgroundColor: Colors.orange,
+        foregroundColor: Colors.white,
+      ),
+      body: Consumer<AppStateProvider>(
+        builder: (context, provider, child) {
+          final leaderboard = provider.leaderboard;
 
-                    // 我的排名卡片
-                    _buildMyRankCard(provider),
-                    const SizedBox(height: 24),
-
-                    // 排行榜列表
-                    ...provider.leaderboard.asMap().entries.map((entry) {
-                      final index = entry.key;
-                      final user = entry.value;
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: _buildLeaderboardItem(
-                          user,
-                          index == 3,
-                        ), // 第4位是用户自己
-                      );
-                    }),
-
-                    const SizedBox(height: 100), // 底部导航空间
-                  ],
-                ),
-              ),
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 24),
+                _buildTopThree(leaderboard),
+                const SizedBox(height: 24),
+                _buildRankingList(leaderboard),
+              ],
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
-  Widget _buildMyRankCard(AppStateProvider provider) {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
+          colors: [Colors.orange, Colors.deepOrange],
         ),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: const Row(
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '我的排名',
-                style: TextStyle(fontSize: 14, color: Colors.white70),
-              ),
-              SizedBox(height: 4),
-              Text(
-                '#4',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                '本周上升 2 位',
-                style: TextStyle(fontSize: 14, color: Colors.white70),
-              ),
-            ],
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              const Text(
-                '智龄币',
-                style: TextStyle(fontSize: 14, color: Colors.white70),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${provider.userProfile.smartCoins}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              Text(
-                '生物年龄 ${provider.userProfile.biologicalAge}岁',
-                style: const TextStyle(fontSize: 14, color: Colors.white70),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLeaderboardItem(user, bool isCurrentUser) {
-    Color getRankColor(int rank) {
-      switch (rank) {
-        case 1:
-          return const Color(0xFFFBBF24); // Gold
-        case 2:
-          return const Color(0xFF9CA3AF); // Silver
-        case 3:
-          return const Color(0xFFF97316); // Bronze
-        default:
-          return const Color(0xFF3B82F6); // Blue
-      }
-    }
-
-    Widget getRankIcon(int rank) {
-      if (rank <= 3) {
-        return const Icon(Icons.emoji_events, color: Colors.white, size: 24);
-      } else {
-        return Text(
-          '$rank',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        );
-      }
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isCurrentUser ? const Color(0xFFDDEAFE) : Colors.white,
-        border: isCurrentUser
-            ? Border.all(color: const Color(0xFF3B82F6), width: 2)
-            : null,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // 排名图标
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: user.rank <= 3
-                    ? [getRankColor(user.rank), getRankColor(user.rank)]
-                    : [const Color(0xFF3B82F6), const Color(0xFF1D4ED8)],
-              ),
-              shape: BoxShape.circle,
-            ),
-            child: Center(child: getRankIcon(user.rank)),
-          ),
-          const SizedBox(width: 16),
-
-          // 用户信息
+          Icon(Icons.leaderboard, color: Colors.white, size: 32),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      user.name,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1F2937),
-                      ),
-                    ),
-                    if (isCurrentUser)
-                      Container(
-                        margin: const EdgeInsets.only(left: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF3B82F6),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: const Text(
-                          '我',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 4),
                 Text(
-                  '生物年龄 ${user.smartAge}岁',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
+                  '健康排行榜',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  '比拼健康指数，获得更多奖励',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
 
-          // 积分
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Row(
-                children: [
-                  const Icon(
-                    Icons.monetization_on,
-                    color: Color(0xFFF97316),
-                    size: 16,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${user.coins}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1F2937),
-                    ),
-                  ),
-                ],
+  Widget _buildTopThree(List<LeaderboardUser> leaderboard) {
+    if (leaderboard.length < 3) return Container();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '前三甲',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // 第二名
+            _buildPodiumItem(leaderboard[1], 2, Colors.grey),
+            // 第一名
+            _buildPodiumItem(leaderboard[0], 1, Colors.amber),
+            // 第三名
+            _buildPodiumItem(leaderboard[2], 3, Colors.brown),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPodiumItem(LeaderboardUser user, int rank, Color color) {
+    return Column(
+      children: [
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            CircleAvatar(
+              radius: rank == 1 ? 40 : 35,
+              backgroundColor: color.withValues(alpha: 0.1),
+              child: Text(
+                user.name[0],
+                style: TextStyle(
+                  fontSize: rank == 1 ? 24 : 20,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+            ),
+            if (rank == 1)
+              Positioned(
+                top: -5,
+                child: Icon(Icons.emoji_events, color: color, size: 24),
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          user.name,
+          style: const TextStyle(fontWeight: FontWeight.w600),
+          textAlign: TextAlign.center,
+        ),
+        Text(
+          '智币: ${user.coins}',
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+        Text(
+          '年龄: ${user.smartAge}',
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRankingList(List<LeaderboardUser> leaderboard) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '完整排名',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-        ],
-      ),
+          child: ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: leaderboard.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final user = leaderboard[index];
+              final isCurrentUser = user.name == '你';
+
+              return Container(
+                decoration: BoxDecoration(
+                  color: isCurrentUser
+                      ? Colors.blue.withValues(alpha: 0.05)
+                      : Colors.transparent,
+                ),
+                child: ListTile(
+                  leading: _buildRankBadge(user.rank),
+                  title: Row(
+                    children: [
+                      Text(
+                        user.name,
+                        style: TextStyle(
+                          fontWeight: isCurrentUser
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          color: isCurrentUser ? Colors.blue : null,
+                        ),
+                      ),
+                      if (isCurrentUser) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.blue,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            '我',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  subtitle: Text('生物年龄: ${user.smartAge}岁'),
+                  trailing: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.emoji_events,
+                            color: Colors.orange,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${user.coins}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRankBadge(int rank) {
+    Color badgeColor;
+    IconData? icon;
+
+    switch (rank) {
+      case 1:
+        badgeColor = Colors.amber;
+        icon = Icons.emoji_events;
+        break;
+      case 2:
+        badgeColor = Colors.grey;
+        icon = Icons.workspace_premium;
+        break;
+      case 3:
+        badgeColor = Colors.brown;
+        icon = Icons.workspace_premium;
+        break;
+      default:
+        badgeColor = Colors.blue;
+    }
+
+    return CircleAvatar(
+      radius: 20,
+      backgroundColor: badgeColor.withValues(alpha: 0.1),
+      child: icon != null
+          ? Icon(icon, color: badgeColor, size: 20)
+          : Text(
+              '$rank',
+              style: TextStyle(fontWeight: FontWeight.bold, color: badgeColor),
+            ),
     );
   }
 }
