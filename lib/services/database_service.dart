@@ -22,13 +22,17 @@ class DatabaseService {
       // Web 平台不支持 SQLite，返回 null
       return null;
     }
-    if (_database != null) {return _database!;}
+    if (_database != null) {
+      return _database!;
+    }
     _database = await _initDatabase();
     return _database!;
   }
 
   Future<SharedPreferences> get webStorage async {
-    if (_prefs != null) {return _prefs!;}
+    if (_prefs != null) {
+      return _prefs!;
+    }
     _prefs = await SharedPreferences.getInstance();
     return _prefs!;
   }
@@ -41,11 +45,16 @@ class DatabaseService {
     final documentsDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentsDirectory.path, 'chronowise.db');
 
-    return await openDatabase(path, version: 1, onCreate: _createDb);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _createDb,
+      onUpgrade: _upgradeDb,
+    );
   }
 
   Future<void> _createDb(Database db, int version) async {
-    // 创建用户表
+    // 创建用户表 - 包含游戏化字段
     await db.execute('''
       CREATE TABLE users(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,7 +65,17 @@ class DatabaseService {
         weight REAL NOT NULL,
         goal TEXT NOT NULL,
         created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
+        updated_at INTEGER NOT NULL,
+        biological_age INTEGER DEFAULT 32,
+        smart_coins INTEGER DEFAULT 120,
+        daily_tasks INTEGER DEFAULT 8,
+        completed_tasks INTEGER DEFAULT 0,
+        streak_days INTEGER DEFAULT 0,
+        level INTEGER DEFAULT 1,
+        total_points INTEGER DEFAULT 0,
+        avatar TEXT DEFAULT '',
+        join_date TEXT DEFAULT '',
+        total_days INTEGER DEFAULT 0
       )
     ''');
 
@@ -112,6 +131,39 @@ class DatabaseService {
     ''');
   }
 
+  // 数据库升级方法 - 添加游戏化字段
+  Future<void> _upgradeDb(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // 添加游戏化字段到用户表
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN biological_age INTEGER DEFAULT 32',
+      );
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN smart_coins INTEGER DEFAULT 120',
+      );
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN daily_tasks INTEGER DEFAULT 8',
+      );
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN completed_tasks INTEGER DEFAULT 0',
+      );
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN streak_days INTEGER DEFAULT 0',
+      );
+      await db.execute('ALTER TABLE users ADD COLUMN level INTEGER DEFAULT 1');
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN total_points INTEGER DEFAULT 0',
+      );
+      await db.execute('ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ""');
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN join_date TEXT DEFAULT ""',
+      );
+      await db.execute(
+        'ALTER TABLE users ADD COLUMN total_days INTEGER DEFAULT 0',
+      );
+    }
+  }
+
   // 🔧 Web 平台的数据操作方法
   Future<List<Map<String, dynamic>>> _getWebData(String key) async {
     final prefs = await webStorage;
@@ -126,14 +178,17 @@ class DatabaseService {
 
   Future<int> _getNextWebId(String key) async {
     final data = await _getWebData(key);
-    if (data.isEmpty) {return 1;}
+    if (data.isEmpty) {
+      return 1;
+    }
     return (data
             .map((item) => item['id'] as int)
             .reduce((a, b) => a > b ? a : b)) +
         1;
   }
 
-  // 用户相关操作
+  // === 用户相关操作 - 新旧方法并存 ===
+
   Future<int> insertUser(User user) async {
     if (kIsWeb) {
       final users = await _getWebData('users');
@@ -146,24 +201,6 @@ class DatabaseService {
     } else {
       final db = await database;
       return await db!.insert('users', user.toMap());
-    }
-  }
-
-  Future<User?> getCurrentUser() async {
-    if (kIsWeb) {
-      final users = await _getWebData('users');
-      if (users.isNotEmpty) {
-        return User.fromMap(users.first);
-      }
-      return null;
-    } else {
-      final db = await database;
-      final maps = await db!.query('users', limit: 1);
-
-      if (maps.isNotEmpty) {
-        return User.fromMap(maps.first);
-      }
-      return null;
     }
   }
 
@@ -186,7 +223,126 @@ class DatabaseService {
     }
   }
 
-  // 健康记录相关操作
+  // === 🆕 新的用户方法 - 使用统一User模型 ===
+
+  // 新方法：获取完整User数据
+  Future<User?> getUser([String? userId]) async {
+    if (kIsWeb) {
+      final users = await _getWebData('users');
+      if (users.isNotEmpty) {
+        // 使用新的User.fromMap，会自动处理所有字段
+        return User.fromMap(users.first);
+      }
+      return null;
+    } else {
+      final db = await database;
+      final maps = await db!.query('users', limit: 1);
+
+      if (maps.isNotEmpty) {
+        return User.fromMap(maps.first);
+      }
+      return null;
+    }
+  }
+
+  // 新方法：保存完整User数据
+  Future<int> saveUser(User user) async {
+    if (kIsWeb) {
+      final users = await _getWebData('users');
+      final userMap = user.toMap();
+
+      if (user.id != null) {
+        // 更新现有用户
+        final index = users.indexWhere((u) => u['id'] == user.id);
+        if (index != -1) {
+          users[index] = userMap;
+        }
+      } else {
+        // 创建新用户
+        final id = await _getNextWebId('users');
+        userMap['id'] = id;
+        users.add(userMap);
+      }
+
+      await _setWebData('users', users);
+      return user.id ?? userMap['id'];
+    } else {
+      final db = await database;
+      if (user.id != null) {
+        await db!.update(
+          'users',
+          user.toMap(),
+          where: 'id = ?',
+          whereArgs: [user.id],
+        );
+        return user.id!;
+      } else {
+        return await db!.insert('users', user.toMap());
+      }
+    }
+  }
+
+  // 新方法：从SharedPreferences加载User数据
+  Future<User?> loadUserFromPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    // 检查是否有用户
+    final hasUser = prefs.getBool('has_user') ?? false;
+    if (!hasUser) return null;
+
+    // 构建User对象（合并所有数据源）
+    return User(
+      name: prefs.getString('user_name') ?? '',
+      age: int.tryParse(prefs.getString('user_age') ?? '') ?? 25,
+      gender: prefs.getString('user_gender') ?? '未设置',
+      height: prefs.getDouble('user_height') ?? 170.0,
+      weight: prefs.getDouble('user_weight') ?? 65.0,
+      goal: prefs.getString('user_goal') ?? '保持健康',
+      createdAt: DateTime.now().subtract(
+        Duration(days: prefs.getInt('total_days') ?? 0),
+      ),
+      updatedAt: DateTime.now(),
+      // 游戏化数据
+      biologicalAge: prefs.getInt('biological_age') ?? 32,
+      smartCoins: prefs.getInt('smart_coins') ?? 120,
+      dailyTasks: 8, // 固定值
+      completedTasks: prefs.getInt('completed_tasks_today') ?? 0,
+      streakDays: prefs.getInt('streak_days') ?? 0,
+      level: prefs.getInt('user_level') ?? 1,
+      totalPoints: prefs.getInt('total_points') ?? 0,
+      avatar: prefs.getString('user_avatar') ?? '',
+      joinDate:
+          prefs.getString('join_date') ??
+          DateTime.now().toString().split(' ')[0],
+      totalDays: prefs.getInt('total_days') ?? 0,
+    );
+  }
+
+  // 新方法：保存User数据到SharedPreferences
+  Future<void> saveUserToPreferences(User user) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('has_user', true);
+    await prefs.setString('user_name', user.name);
+    await prefs.setString('user_age', user.age.toString());
+    await prefs.setString('user_gender', user.gender);
+    await prefs.setDouble('user_height', user.height);
+    await prefs.setDouble('user_weight', user.weight);
+    await prefs.setString('user_goal', user.goal);
+
+    // 游戏化数据
+    await prefs.setInt('biological_age', user.biologicalAge);
+    await prefs.setInt('smart_coins', user.smartCoins);
+    await prefs.setInt('completed_tasks_today', user.completedTasks);
+    await prefs.setInt('streak_days', user.streakDays);
+    await prefs.setInt('user_level', user.level);
+    await prefs.setInt('total_points', user.totalPoints);
+    await prefs.setString('user_avatar', user.avatar);
+    await prefs.setString('join_date', user.joinDate);
+    await prefs.setInt('total_days', user.totalDays);
+  }
+
+  // === 健康记录相关操作 ===
   Future<int> insertHealthRecord(HealthRecord record) async {
     if (kIsWeb) {
       final records = await _getWebData('health_records');
@@ -310,7 +466,7 @@ class DatabaseService {
     }
   }
 
-  // 积分交易相关操作
+  // === 积分交易相关操作 ===
   Future<int> insertPointTransaction(PointTransaction transaction) async {
     if (kIsWeb) {
       final transactions = await _getWebData('point_transactions');
@@ -381,7 +537,7 @@ class DatabaseService {
     }
   }
 
-  // 任务相关操作
+  // === 任务相关操作 ===
   Future<int> insertTask(Task task) async {
     if (kIsWeb) {
       final tasks = await _getWebData('tasks');

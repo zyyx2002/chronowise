@@ -86,7 +86,7 @@ class CommunityScreen extends StatelessWidget {
               child: _buildStatCard(
                 icon: Icons.timeline,
                 title: '连续天数',
-                value: '${provider.userProfile.streakDays}',
+                value: '${provider.currentUser?.streakDays ?? 0}',
                 color: Colors.green,
               ),
             ),
@@ -95,7 +95,7 @@ class CommunityScreen extends StatelessWidget {
               child: _buildStatCard(
                 icon: Icons.calendar_today,
                 title: '总天数',
-                value: '${provider.userProfile.totalDays}',
+                value: '${provider.currentUser?.totalDays ?? 0}',
                 color: Colors.blue,
               ),
             ),

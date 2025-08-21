@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state_provider.dart';
+import '../models/user.dart'; // 🆕 添加User导入
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -24,7 +25,7 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                _buildUserHeader(user, provider),
+                _buildUserHeader(user, provider), // 🆕 现在user是User类型
                 const SizedBox(height: 24),
                 _buildStatsCards(provider),
                 const SizedBox(height: 24),
@@ -37,7 +38,8 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildUserHeader(UserItem user, AppStateProvider provider) {
+  // 🆕 修改方法签名：接受User而不是UserItem
+  Widget _buildUserHeader(User user, AppStateProvider provider) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -71,12 +73,12 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '等级 ${provider.userProfile.level}',
+            '等级 ${user.level}', // 🆕 直接从User对象获取
             style: const TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),
           Text(
-            '已使用 ${provider.userProfile.totalDays} 天',
+            '已使用 ${user.totalDays} 天', // 🆕 直接从User对象获取
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
         ],
@@ -91,7 +93,7 @@ class ProfileScreen extends StatelessWidget {
           child: _buildStatCard(
             icon: Icons.emoji_events,
             title: '智币',
-            value: '${provider.userProfile.smartCoins}',
+            value: '${provider.currentUser?.smartCoins ?? 0}', // 🆕 直接从User获取
             color: Colors.orange,
           ),
         ),
@@ -100,7 +102,8 @@ class ProfileScreen extends StatelessWidget {
           child: _buildStatCard(
             icon: Icons.trending_down,
             title: '生物年龄',
-            value: '${provider.userProfile.biologicalAge}岁',
+            value:
+                '${provider.currentUser?.biologicalAge ?? 32}岁', // 🆕 直接从User获取
             color: Colors.green,
           ),
         ),
@@ -212,9 +215,11 @@ class ProfileScreen extends StatelessWidget {
 
   void _showEditProfileDialog(BuildContext context, AppStateProvider provider) {
     final nameController = TextEditingController(
-      text: provider.userProfile.name,
+      text: provider.currentUser?.name ?? '', // 🆕 直接从User获取
     );
-    final ageController = TextEditingController(text: provider.userProfile.age);
+    final ageController = TextEditingController(
+      text: provider.currentUser?.age.toString() ?? '', // 🆕 直接从User获取
+    );
 
     showDialog(
       context: context,

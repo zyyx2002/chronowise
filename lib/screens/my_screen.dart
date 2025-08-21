@@ -64,8 +64,8 @@ class MyScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        provider.userProfile.name.isNotEmpty
-                            ? provider.userProfile.name[0].toUpperCase()
+                        (provider.currentUser?.name?.isNotEmpty ?? false)
+                            ? provider.currentUser!.name![0].toUpperCase()
                             : 'U',
                         style: const TextStyle(
                           fontSize: 28,
@@ -81,8 +81,8 @@ class MyScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          provider.userProfile.name.isNotEmpty
-                              ? provider.userProfile.name
+                          (provider.currentUser?.name?.isNotEmpty ?? false)
+                              ? provider.currentUser!.name!
                               : '智龄用户',
                           style: const TextStyle(
                             fontSize: 20,
@@ -92,7 +92,7 @@ class MyScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '加入 ${provider.userProfile.totalDays} 天',
+                          '加入 ${provider.currentUser?.totalDays ?? 0} 天',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFFDDD6FE),
@@ -108,7 +108,7 @@ class MyScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '等级 ${provider.userProfile.level} · 健康达人',
+                              '等级 ${provider.currentUser?.level ?? 1} · 健康达人',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.white,
@@ -142,7 +142,7 @@ class MyScreen extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        '${provider.userProfile.smartCoins}',
+                        '${provider.currentUser?.smartCoins ?? 0}',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -161,7 +161,7 @@ class MyScreen extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        '${provider.userProfile.biologicalAge}',
+                        '${provider.currentUser?.biologicalAge ?? 32}',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -180,7 +180,7 @@ class MyScreen extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        '${provider.userProfile.streakDays}',
+                        '${provider.currentUser?.streakDays ?? 0}',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -237,10 +237,7 @@ class MyScreen extends StatelessWidget {
               ),
               Text(
                 '$unlockedCount/${provider.achievements.length}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
+                style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
               ),
             ],
           ),
@@ -387,14 +384,14 @@ class MyScreen extends StatelessWidget {
           _buildDataItem(
             Icons.directions_run,
             '运动记录',
-            '累计运动 ${(provider.userProfile.totalDays * 0.7).toInt()}小时',
+            '累计运动 ${((provider.currentUser?.totalDays ?? 0) * 0.7).toInt()}小时',
             const Color(0xFF10B981),
           ),
           const SizedBox(height: 4),
           _buildDataItem(
             Icons.psychology,
             '冥想记录',
-            '累计冥想 ${(provider.userProfile.totalDays * 0.5).toInt()}次',
+            '累计冥想 ${((provider.currentUser?.totalDays ?? 0) * 0.5).toInt()}次',
             const Color(0xFF8B5CF6),
           ),
         ],
@@ -403,7 +400,11 @@ class MyScreen extends StatelessWidget {
   }
 
   Widget _buildDataItem(
-      IconData icon, String title, String subtitle, Color color) {
+    IconData icon,
+    String title,
+    String subtitle,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 4),
@@ -445,11 +446,7 @@ class MyScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(
-            Icons.chevron_right,
-            color: Color(0xFF9CA3AF),
-            size: 20,
-          ),
+          const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF), size: 20),
         ],
       ),
     );
@@ -516,8 +513,10 @@ class MyScreen extends StatelessWidget {
               ),
               if (hasNew)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEF4444),
                     borderRadius: BorderRadius.circular(12),
@@ -545,7 +544,8 @@ class MyScreen extends StatelessWidget {
   }
 
   Widget _buildLevelProgressCard(AppStateProvider provider) {
-    final currentLevelPoints = provider.userProfile.totalPoints % 3000;
+    final totalPoints = provider.currentUser?.totalPoints ?? 0;
+    final currentLevelPoints = totalPoints % 3000;
     final nextLevelPoints = 3000 - currentLevelPoints;
     final progressPercentage = currentLevelPoints / 3000;
 
@@ -588,7 +588,7 @@ class MyScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '等级 ${provider.userProfile.level}',
+                          '等级 ${provider.currentUser?.level ?? 1}',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -596,7 +596,7 @@ class MyScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '${provider.userProfile.totalPoints}/3000',
+                          '$totalPoints/3000',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF6B7280),
@@ -652,7 +652,7 @@ class MyScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        '${provider.userProfile.totalDays}',
+                        '${provider.currentUser?.totalDays ?? 0}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -681,7 +681,7 @@ class MyScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        '${(provider.userProfile.totalPoints / 100).floor()}',
+                        '${(totalPoints / 100).floor()}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
