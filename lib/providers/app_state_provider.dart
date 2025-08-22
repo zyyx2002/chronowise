@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
 import '../services/database_service.dart';
@@ -7,7 +7,7 @@ class AppStateProvider extends ChangeNotifier {
   // === 核心状态 ===
   bool _isLoading = true;
   bool _hasUser = false;
-  User? _currentUser; // 🆕 使用新的User模型
+  User? _currentUser;
 
   // === 健康数据 ===
   int _todaySteps = 0;
@@ -90,7 +90,7 @@ class AppStateProvider extends ChangeNotifier {
   // === Getters ===
   bool get isLoading => _isLoading;
   bool get hasUser => _hasUser;
-  User? get currentUser => _currentUser; // 🆕 新的getter
+  User? get currentUser => _currentUser;
   String get currentPage => _currentPage;
   int get onboardingStep => _onboardingStep;
 
@@ -108,7 +108,7 @@ class AppStateProvider extends ChangeNotifier {
   double get completionRate => completedTasksToday / totalTasksToday;
 
   // 积分数据
-  int get totalPoints => _currentUser?.totalPoints ?? 0; // 🆕 从User模型获取
+  int get totalPoints => _currentUser?.totalPoints ?? 0;
   List<PointTransaction> get pointHistory => _pointHistory;
 
   // 成就数据
@@ -122,8 +122,8 @@ class AppStateProvider extends ChangeNotifier {
     LeaderboardUser(
       rank: 4,
       name: '你',
-      smartAge: _currentUser?.biologicalAge ?? 32, // 🆕 从User模型获取
-      coins: _currentUser?.smartCoins ?? 120, // 🆕 从User模型获取
+      smartAge: _currentUser?.biologicalAge ?? 32,
+      coins: _currentUser?.smartCoins ?? 120,
     ),
     LeaderboardUser(rank: 5, name: '活力青春', smartAge: 33, coins: 1920),
   ];
@@ -219,7 +219,6 @@ class AppStateProvider extends ChangeNotifier {
       await _loadTodayData();
       await _loadPointsData();
 
-      // 模拟加载延迟
       await Future.delayed(const Duration(seconds: 1));
     } catch (e) {
       debugPrint('初始化失败: $e');
@@ -229,18 +228,14 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  // === 🆕 使用新的数据加载方法 ===
   Future<void> _loadUserData() async {
     try {
-      // 优先从数据库加载
       _currentUser = await _dbService.getUser();
 
-      // 如果数据库没有，尝试从SharedPreferences加载并迁移
       if (_currentUser == null) {
         _currentUser = await _dbService.loadUserFromPreferences();
 
         if (_currentUser != null) {
-          // 迁移到数据库
           await _dbService.saveUser(_currentUser!);
           _hasUser = true;
         }
@@ -260,18 +255,15 @@ class AppStateProvider extends ChangeNotifier {
     final savedDate = prefs.getString('last_data_date');
 
     if (savedDate == today) {
-      // 加载今日数据
       _todaySteps = prefs.getInt('today_steps') ?? 0;
       _todayWater = prefs.getDouble('today_water') ?? 0.0;
       _todaySleep = prefs.getInt('today_sleep') ?? 0;
       _todayExercise = prefs.getInt('today_exercise') ?? 0;
 
-      // 加载打卡状态
       for (String key in _todayCheckins.keys) {
         _todayCheckins[key] = prefs.getBool('checkin_$key') ?? false;
       }
     } else {
-      // 新的一天，重置数据
       await _resetDailyData();
     }
 
@@ -279,7 +271,6 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   Future<void> _loadPointsData() async {
-    // 模拟积分历史（实际项目中应该从数据库加载）
     _pointHistory = [
       PointTransaction(
         points: 20,
@@ -302,7 +293,6 @@ class AppStateProvider extends ChangeNotifier {
     ];
   }
 
-  // === 🆕 用户管理方法 - 使用新的User模型 ===
   Future<bool> createUser({
     required String name,
     required String age,
@@ -310,7 +300,6 @@ class AppStateProvider extends ChangeNotifier {
     String goal = '保持健康',
   }) async {
     try {
-      // 创建新的User对象
       _currentUser = User(
         name: name,
         age: int.tryParse(age) ?? 25,
@@ -318,22 +307,19 @@ class AppStateProvider extends ChangeNotifier {
         goal: goal,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
-        // 游戏化数据使用默认值
         biologicalAge: 32,
-        smartCoins: 220, // 120 + 100 新用户奖励
+        smartCoins: 220,
         level: 1,
         totalPoints: 100,
         joinDate: DateTime.now().toString().split(' ')[0],
         totalDays: 0,
       );
 
-      // 保存到数据库和SharedPreferences
       await _dbService.saveUser(_currentUser!);
       await _dbService.saveUserToPreferences(_currentUser!);
 
       _hasUser = true;
 
-      // 给新用户奖励
       await _addPoints(100, 'bonus', '新用户欢迎奖励');
 
       notifyListeners();
@@ -344,7 +330,6 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  // === 健康数据管理 ===
   Future<bool> updateHealthData({
     int? steps,
     double? water,
@@ -391,7 +376,6 @@ class AppStateProvider extends ChangeNotifier {
   void _calculateHealthScore() {
     int score = 0;
 
-    // 步数评分 (最高20分)
     if (_todaySteps >= 10000) {
       score += 20;
     } else if (_todaySteps >= 8000) {
@@ -402,7 +386,6 @@ class AppStateProvider extends ChangeNotifier {
       score += 5;
     }
 
-    // 饮水评分 (最高15分)
     if (_todayWater >= 2.5) {
       score += 15;
     } else if (_todayWater >= 2.0) {
@@ -411,7 +394,6 @@ class AppStateProvider extends ChangeNotifier {
       score += 5;
     }
 
-    // 睡眠评分 (最高20分)
     if (_todaySleep >= 7 && _todaySleep <= 9) {
       score += 20;
     } else if (_todaySleep >= 6 && _todaySleep <= 10) {
@@ -420,7 +402,6 @@ class AppStateProvider extends ChangeNotifier {
       score += 10;
     }
 
-    // 运动评分 (最高20分)
     if (_todayExercise >= 60) {
       score += 20;
     } else if (_todayExercise >= 30) {
@@ -431,13 +412,11 @@ class AppStateProvider extends ChangeNotifier {
       score += 5;
     }
 
-    // 打卡评分 (最高25分)
     score += (completedTasksToday * 3).clamp(0, 25);
 
     _todayHealthScore = score.clamp(0, 100);
   }
 
-  // === 任务管理 ===
   Future<bool> completeTask(int taskId) async {
     try {
       final task = todayTasks.firstWhere((t) => t.id == taskId);
@@ -446,11 +425,9 @@ class AppStateProvider extends ChangeNotifier {
 
       final prefs = await SharedPreferences.getInstance();
 
-      // 更新打卡状态
       _todayCheckins[task.type] = true;
       await prefs.setBool('checkin_${task.type}', true);
 
-      // 添加积分
       await _addPoints(task.pointsReward, 'task', '完成任务：${task.title}');
 
       _calculateHealthScore();
@@ -470,11 +447,9 @@ class AppStateProvider extends ChangeNotifier {
 
       final prefs = await SharedPreferences.getInstance();
 
-      // 更新打卡状态
       _todayCheckins[task.type] = false;
       await prefs.setBool('checkin_${task.type}', false);
 
-      // 扣除积分
       await _addPoints(-task.pointsReward, 'task', '取消任务：${task.title}');
 
       _calculateHealthScore();
@@ -486,18 +461,15 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  // === 🆕 积分管理 - 更新User模型 ===
   Future<void> _addPoints(int points, String type, String description) async {
     if (_currentUser == null) return;
 
-    // 更新用户数据
     _currentUser = _currentUser!.copyWith(
       totalPoints: _currentUser!.totalPoints + points,
       smartCoins: _currentUser!.smartCoins + points,
       updatedAt: DateTime.now(),
     );
 
-    // 添加积分记录
     _pointHistory.insert(
       0,
       PointTransaction(
@@ -508,11 +480,9 @@ class AppStateProvider extends ChangeNotifier {
       ),
     );
 
-    // 保存到数据库
     await _dbService.saveUser(_currentUser!);
     await _dbService.saveUserToPreferences(_currentUser!);
 
-    // 检查等级提升
     _checkLevelUp();
   }
 
@@ -522,11 +492,9 @@ class AppStateProvider extends ChangeNotifier {
     final newLevel = (_currentUser!.totalPoints / 1000).floor() + 1;
     if (newLevel > _currentUser!.level) {
       _currentUser = _currentUser!.copyWith(level: newLevel);
-      // 可以在这里添加等级提升的奖励
     }
   }
 
-  // === 每日签到 ===
   Future<bool> dailyCheckIn() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -534,7 +502,7 @@ class AppStateProvider extends ChangeNotifier {
       final lastCheckIn = prefs.getString('last_checkin_date');
 
       if (lastCheckIn == today) {
-        return false; // 今天已经签到过了
+        return false;
       }
 
       await prefs.setString('last_checkin_date', today);
@@ -548,25 +516,20 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  // === 成就检查 ===
   Future<void> _checkHealthAchievements() async {
-    // 步数成就
     if (_todaySteps >= 10000) {
       await _addPoints(50, 'achievement', '步数达标奖励（10000步）');
     }
 
-    // 饮水成就
     if (_todayWater >= 3.0) {
       await _addPoints(30, 'achievement', '饮水达标奖励（3升）');
     }
 
-    // 健康达人成就
     if (_todayHealthScore >= 80) {
       await _addPoints(100, 'achievement', '健康达人奖励（80分以上）');
     }
   }
 
-  // === 页面导航 ===
   void setCurrentPage(String page) {
     _currentPage = page;
     notifyListeners();
@@ -577,7 +540,6 @@ class AppStateProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // === 🆕 用户信息更新方法 ===
   void updateUserName(String name) {
     if (_currentUser == null) return;
     _currentUser = _currentUser!.copyWith(
@@ -600,24 +562,20 @@ class AppStateProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // === 重置数据 ===
   Future<void> _resetDailyData() async {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().split('T')[0];
 
-    // 重置健康数据
     _todaySteps = 0;
     _todayWater = 0.0;
     _todaySleep = 0;
     _todayExercise = 0;
 
-    // 重置打卡状态
     for (String key in _todayCheckins.keys) {
       _todayCheckins[key] = false;
       await prefs.setBool('checkin_$key', false);
     }
 
-    // 保存重置后的数据
     await prefs.setInt('today_steps', 0);
     await prefs.setDouble('today_water', 0.0);
     await prefs.setInt('today_sleep', 0);
@@ -633,7 +591,7 @@ class AppStateProvider extends ChangeNotifier {
   }
 }
 
-// === 辅助类保持不变 ===
+// === 辅助类 ===
 class TaskItem {
   final int id;
   final String title;
@@ -690,22 +648,6 @@ class HealthRecordItem {
     this.water,
     this.sleepHours,
     this.exerciseMinutes,
-  });
-}
-
-class UserItem {
-  final String name;
-  final int age;
-  final String gender;
-  final String goal;
-  final DateTime createdAt;
-
-  UserItem({
-    required this.name,
-    required this.age,
-    required this.gender,
-    required this.goal,
-    required this.createdAt,
   });
 }
 

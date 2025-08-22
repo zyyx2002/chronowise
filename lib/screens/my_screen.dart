@@ -20,7 +20,7 @@ class MyScreen extends StatelessWidget {
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                     child: Column(
                       children: [
-                        const SizedBox(height: 32), // 与头部重叠
+                        const SizedBox(height: 32),
                         _buildAchievementsCard(provider),
                         const SizedBox(height: 24),
                         _buildMyDataCard(provider),
@@ -41,6 +41,8 @@ class MyScreen extends StatelessWidget {
   }
 
   Widget _buildProfileHeader(AppStateProvider provider) {
+    final user = provider.currentUser;
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -52,7 +54,6 @@ class MyScreen extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 24, 24, 64),
           child: Column(
             children: [
-              // 个人信息头部
               Row(
                 children: [
                   Container(
@@ -64,8 +65,8 @@ class MyScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        (provider.currentUser?.name?.isNotEmpty ?? false)
-                            ? provider.currentUser!.name![0].toUpperCase()
+                        (user?.name?.isNotEmpty ?? false)
+                            ? user!.name[0].toUpperCase()
                             : 'U',
                         style: const TextStyle(
                           fontSize: 28,
@@ -81,9 +82,7 @@ class MyScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          (provider.currentUser?.name?.isNotEmpty ?? false)
-                              ? provider.currentUser!.name!
-                              : '智龄用户',
+                          user?.name ?? '智龄用户',
                           style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -92,7 +91,7 @@ class MyScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '加入 ${provider.currentUser?.totalDays ?? 0} 天',
+                          '加入 ${user?.totalDays ?? 0} 天',
                           style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFFDDD6FE),
@@ -108,7 +107,7 @@ class MyScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              '等级 ${provider.currentUser?.level ?? 1} · 健康达人',
+                              '等级 ${user?.level ?? 1} · 健康达人',
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.white,
@@ -134,15 +133,13 @@ class MyScreen extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 24),
-
-              // 核心数据展示
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Column(
                     children: [
                       Text(
-                        '${provider.currentUser?.smartCoins ?? 0}',
+                        '${user?.smartCoins ?? 0}',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -161,7 +158,7 @@ class MyScreen extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        '${provider.currentUser?.biologicalAge ?? 32}',
+                        '${user?.biologicalAge ?? 32}',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -180,7 +177,7 @@ class MyScreen extends StatelessWidget {
                   Column(
                     children: [
                       Text(
-                        '${provider.currentUser?.streakDays ?? 0}',
+                        '${user?.streakDays ?? 0}',
                         style: const TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -242,8 +239,6 @@ class MyScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-
-          // 成就网格
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
@@ -253,8 +248,11 @@ class MyScreen extends StatelessWidget {
               mainAxisSpacing: 16,
               childAspectRatio: 0.8,
             ),
-            itemCount: 6,
+            itemCount: provider.achievements.length.clamp(0, 6),
             itemBuilder: (context, index) {
+              if (index >= provider.achievements.length) {
+                return const SizedBox.shrink();
+              }
               final achievement = provider.achievements[index];
               return Container(
                 padding: const EdgeInsets.all(12),
@@ -326,8 +324,6 @@ class MyScreen extends StatelessWidget {
             },
           ),
           const SizedBox(height: 16),
-
-          // 查看全部按钮
           Center(
             child: TextButton(
               onPressed: () {},
@@ -372,81 +368,134 @@ class MyScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 20),
-
-          // 数据项列表
-          _buildDataItem(
-            Icons.bar_chart,
-            '健康报告',
-            '查看详细健康分析',
-            const Color(0xFF3B82F6),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDataItem(
+                  '健康评分',
+                  '${provider.todayHealthScore}/100',
+                  '🎯',
+                  const Color(0xFF3B82F6),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildDataItem(
+                  '今日步数',
+                  '${provider.todaySteps}',
+                  '👟',
+                  const Color(0xFF10B981),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          _buildDataItem(
-            Icons.directions_run,
-            '运动记录',
-            '累计运动 ${((provider.currentUser?.totalDays ?? 0) * 0.7).toInt()}小时',
-            const Color(0xFF10B981),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _buildDataItem(
+                  '饮水量',
+                  '${provider.todayWater.toStringAsFixed(1)}L',
+                  '💧',
+                  const Color(0xFF06B6D4),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildDataItem(
+                  '运动时长',
+                  '${provider.todayExercise}分钟',
+                  '🏃‍♂️',
+                  const Color(0xFFF59E0B),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          _buildDataItem(
-            Icons.psychology,
-            '冥想记录',
-            '累计冥想 ${((provider.currentUser?.totalDays ?? 0) * 0.5).toInt()}次',
-            const Color(0xFF8B5CF6),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Text('📊', style: TextStyle(fontSize: 20)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '今日任务完成',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1F2937),
+                        ),
+                      ),
+                      Text(
+                        '${provider.completedTasksToday}/${provider.totalTasksToday}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  '${(provider.completionRate * 100).toInt()}%',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF3B82F6),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDataItem(
-    IconData icon,
-    String title,
-    String subtitle,
-    Color color,
-  ) {
+  Widget _buildDataItem(String title, String value, String emoji, Color color) {
     return Container(
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
+          Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 16)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 16,
+                  style: TextStyle(
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1F2937),
+                    color: color,
                   ),
                 ),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF6B7280),
-                  ),
-                ),
-              ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: color,
             ),
           ),
-          const Icon(Icons.chevron_right, color: Color(0xFF9CA3AF), size: 20),
         ],
       ),
     );
@@ -477,159 +526,137 @@ class MyScreen extends StatelessWidget {
               color: Color(0xFF1F2937),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // 功能菜单项
-          _buildMenuItem(Icons.settings, '设置'),
-          _buildMenuItem(Icons.card_giftcard, '智龄币商城', hasNew: true),
-          _buildMenuItem(Icons.people, '邀请好友'),
-          _buildMenuItem(Icons.help_outline, '帮助与反馈'),
-          _buildMenuItem(Icons.shield, '隐私政策'),
+          const SizedBox(height: 20),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 3,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: 1.0,
+            children: const [
+              _FunctionItem(
+                emoji: '📊',
+                title: '健康报告',
+                color: Color(0xFF3B82F6),
+              ),
+              _FunctionItem(
+                emoji: '🎯',
+                title: '目标设置',
+                color: Color(0xFF10B981),
+              ),
+              _FunctionItem(
+                emoji: '📈',
+                title: '数据分析',
+                color: Color(0xFF8B5CF6),
+              ),
+              _FunctionItem(
+                emoji: '💰',
+                title: '积分商城',
+                color: Color(0xFFF59E0B),
+              ),
+              _FunctionItem(
+                emoji: '👥',
+                title: '社区交流',
+                color: Color(0xFFEC4899),
+              ),
+              _FunctionItem(emoji: '⚙️', title: '设置', color: Color(0xFF6B7280)),
+            ],
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildMenuItem(IconData icon, String title, {bool hasNew = false}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              Icon(icon, color: const Color(0xFF6B7280), size: 20),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-              ),
-              if (hasNew)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    '新',
-                    style: TextStyle(
-                      fontSize: 10,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              const SizedBox(width: 8),
-              const Icon(
-                Icons.chevron_right,
-                color: Color(0xFF9CA3AF),
-                size: 20,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildLevelProgressCard(AppStateProvider provider) {
-    final totalPoints = provider.currentUser?.totalPoints ?? 0;
-    final currentLevelPoints = totalPoints % 3000;
-    final nextLevelPoints = 3000 - currentLevelPoints;
-    final progressPercentage = currentLevelPoints / 3000;
+    final user = provider.currentUser;
+    final currentLevel = user?.level ?? 1;
+    final currentPoints = user?.totalPoints ?? 0;
+    final pointsForCurrentLevel = (currentLevel - 1) * 1000;
+    final pointsForNextLevel = currentLevel * 1000;
+    final progressPoints = currentPoints - pointsForCurrentLevel;
+    final neededPoints = pointsForNextLevel - pointsForCurrentLevel;
+    final progress = (progressPoints / neededPoints).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF8B5CF6), Color(0xFFEC4899)],
+        ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '等级进度',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                '等级进度',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'Lv.$currentLevel',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
-
-          // 等级进度展示
           Row(
             children: [
-              const Text('🏆', style: TextStyle(fontSize: 32)),
-              const SizedBox(width: 16),
+              const Text('🏆', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          '等级 ${provider.currentUser?.level ?? 1}',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1F2937),
-                          ),
-                        ),
-                        Text(
-                          '$totalPoints/3000',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF6B7280),
-                          ),
-                        ),
-                      ],
+                    Text(
+                      '距离下一级还需 ${neededPoints - progressPoints} 积分',
+                      style: const TextStyle(fontSize: 14, color: Colors.white),
                     ),
                     const SizedBox(height: 8),
-                    Container(
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE5E7EB),
-                        borderRadius: BorderRadius.circular(4),
+                    LinearProgressIndicator(
+                      value: progress,
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.white,
                       ),
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: progressPercentage,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [Color(0xFF3B82F6), Color(0xFF8B5CF6)],
-                            ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ),
+                      minHeight: 6,
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '距离下一等级还需 $nextLevelPoints 积分',
+                      '$progressPoints / $neededPoints',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: Color(0xFF6B7280),
+                        color: Color(0xFFDDD6FE),
                       ),
                     ),
                   ],
@@ -637,71 +664,127 @@ class MyScreen extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 20),
-
-          // 统计数据
-          Row(
-            children: [
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDDEAFE),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        '${provider.currentUser?.totalDays ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1D4ED8),
-                        ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                const Column(
+                  children: [
+                    Text(
+                      '总积分',
+                      style: TextStyle(fontSize: 12, color: Color(0xFFDDD6FE)),
+                    ),
+                    Text(
+                      '2,450',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                      const Text(
-                        '总打卡天数',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3E8FF),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(
-                    children: [
-                      Text(
-                        '${(totalPoints / 100).floor()}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF7C3AED),
-                        ),
-                      ),
-                      const Text(
-                        '总获得奖励',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: Colors.white.withValues(alpha: 0.2),
                 ),
-              ),
-            ],
+                const Column(
+                  children: [
+                    Text(
+                      '今日获得',
+                      style: TextStyle(fontSize: 12, color: Color(0xFFDDD6FE)),
+                    ),
+                    Text(
+                      '+85',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  width: 1,
+                  height: 40,
+                  color: Colors.white.withValues(alpha: 0.2),
+                ),
+                const Column(
+                  children: [
+                    Text(
+                      '排名',
+                      style: TextStyle(fontSize: 12, color: Color(0xFFDDD6FE)),
+                    ),
+                    Text(
+                      '#4',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FunctionItem extends StatelessWidget {
+  final String emoji;
+  final String title;
+  final Color color;
+
+  const _FunctionItem({
+    required this.emoji,
+    required this.title,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {},
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(emoji, style: const TextStyle(fontSize: 24)),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

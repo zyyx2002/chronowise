@@ -38,7 +38,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // 🆕 修改方法签名：接受User而不是UserItem
+  // 🆕 修改方法签名：使用统一的User模型
   Widget _buildUserHeader(User user, AppStateProvider provider) {
     return Container(
       padding: const EdgeInsets.all(24),
