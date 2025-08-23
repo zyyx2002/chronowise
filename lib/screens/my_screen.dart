@@ -65,7 +65,7 @@ class MyScreen extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        (user?.name?.isNotEmpty ?? false)
+                        (user?.name.isNotEmpty ?? false)
                             ? user!.name[0].toUpperCase()
                             : 'U',
                         style: const TextStyle(
@@ -276,7 +276,7 @@ class MyScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      achievement.icon,
+                      achievement.iconData, // ✅ 修复：使用 iconData
                       style: TextStyle(
                         fontSize: 24,
                         color: achievement.unlocked ? null : Colors.grey[400],
@@ -284,7 +284,7 @@ class MyScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      achievement.name,
+                      achievement.title, // ✅ 修复：使用 title
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -298,7 +298,7 @@ class MyScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      achievement.desc,
+                      achievement.description, // ✅ 修复：使用 description
                       style: const TextStyle(
                         fontSize: 10,
                         color: Color(0xFF6B7280),
@@ -307,11 +307,12 @@ class MyScreen extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (achievement.unlocked && achievement.date != null)
+                    if (achievement.unlocked &&
+                        achievement.unlockedDate != null)
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
-                          achievement.date!,
+                          '${achievement.unlockedDate!.month}/${achievement.unlockedDate!.day}', // ✅ 修复：使用 unlockedDate
                           style: const TextStyle(
                             fontSize: 8,
                             color: Color(0xFF9CA3AF),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state_provider.dart';
+import '../models/achievement.dart';
 
 class CommunityScreen extends StatelessWidget {
   const CommunityScreen({super.key});
@@ -206,7 +207,7 @@ class CommunityScreen extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              achievement.icon,
+              achievement.iconData, // ✅ 修复：使用 iconData
               style: TextStyle(
                 fontSize: 24,
                 color: achievement.unlocked ? null : Colors.grey,
@@ -216,7 +217,7 @@ class CommunityScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          achievement.name,
+          achievement.title, // ✅ 修复：使用 title
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,

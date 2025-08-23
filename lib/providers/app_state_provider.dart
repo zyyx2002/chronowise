@@ -1,6 +1,9 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
+import '../models/task.dart';
+import '../models/achievement.dart';
+import '../models/health_record.dart';
 import '../services/database_service.dart';
 
 class AppStateProvider extends ChangeNotifier {
@@ -9,12 +12,9 @@ class AppStateProvider extends ChangeNotifier {
   bool _hasUser = false;
   User? _currentUser;
 
-  // === 健康数据 ===
-  int _todaySteps = 0;
-  double _todayWater = 0.0;
-  int _todaySleep = 0;
-  int _todayExercise = 0;
-  int _todayHealthScore = 0;
+  // === 健康数据（统一管理）===
+  HealthRecord? _todayHealthRecord;
+  int _todayHealthScore = 0; // 额外存储健康分数
 
   // === 任务数据 ===
   final Map<String, bool> _todayCheckins = {
@@ -27,6 +27,8 @@ class AppStateProvider extends ChangeNotifier {
     'supplement': false,
     'social': false,
   };
+
+  List<Task> _todayTasks = [];
 
   // === 积分系统 ===
   List<PointTransaction> _pointHistory = [];
@@ -41,49 +43,52 @@ class AppStateProvider extends ChangeNotifier {
   // === 成就系统 ===
   final List<Achievement> _achievements = [
     Achievement(
-      id: 1,
-      name: '初来乍到',
-      desc: '完成注册',
-      icon: '🎉',
+      id: '1',
+      title: '初来乍到',
+      description: '完成注册',
+      iconData: '🎉',
       unlocked: true,
-      date: '2024-05-01',
+      unlockedDate: DateTime.parse('2024-05-01'),
+      category: 'registration',
     ),
     Achievement(
-      id: 2,
-      name: '坚持一周',
-      desc: '连续打卡7天',
-      icon: '📅',
+      id: '2',
+      title: '坚持一周',
+      description: '连续打卡7天',
+      iconData: '📅',
       unlocked: true,
-      date: '2024-05-08',
+      unlockedDate: DateTime.parse('2024-05-08'),
+      category: 'consistency',
     ),
     Achievement(
-      id: 3,
-      name: '运动达人',
-      desc: '累计运动30小时',
-      icon: '🏃',
+      id: '3',
+      title: '运动达人',
+      description: '累计运动30小时',
+      iconData: '🏃',
       unlocked: true,
-      date: '2024-05-15',
+      unlockedDate: DateTime.parse('2024-05-15'),
+      category: 'exercise',
     ),
-    Achievement(
-      id: 4,
-      name: '冥想大师',
-      desc: '累计冥想100次',
-      icon: '🧘',
-      unlocked: false,
+    Achievement.locked(
+      id: '4',
+      title: '冥想大师',
+      description: '累计冥想100次',
+      iconData: '🧘',
+      category: 'meditation',
     ),
-    Achievement(
-      id: 5,
-      name: '健康先锋',
-      desc: '连续打卡30天',
-      icon: '🏆',
-      unlocked: false,
+    Achievement.locked(
+      id: '5',
+      title: '健康先锋',
+      description: '连续打卡30天',
+      iconData: '🏆',
+      category: 'consistency',
     ),
-    Achievement(
-      id: 6,
-      name: '抗衰专家',
-      desc: '生物年龄降低5岁',
-      icon: '⭐',
-      unlocked: false,
+    Achievement.locked(
+      id: '6',
+      title: '抗衰专家',
+      description: '生物年龄降低5岁',
+      iconData: '⭐',
+      category: 'health',
     ),
   ];
 
@@ -94,18 +99,27 @@ class AppStateProvider extends ChangeNotifier {
   String get currentPage => _currentPage;
   int get onboardingStep => _onboardingStep;
 
-  // 健康数据
-  int get todaySteps => _todaySteps;
-  double get todayWater => _todayWater;
-  int get todaySleep => _todaySleep;
-  int get todayExercise => _todayExercise;
+  // 健康数据（通过统一的 HealthRecord 访问）
+  int get todaySteps => _todayHealthRecord?.steps ?? 0;
+  double get todayWater => _todayHealthRecord?.water ?? 0.0;
+  int get todaySleep => _todayHealthRecord?.sleepHours ?? 0;
+  int get todayExercise => _todayHealthRecord?.exerciseMinutes ?? 0;
   int get todayHealthScore => _todayHealthScore;
+
+  // 统一的健康记录访问
+  HealthRecord? get todayHealthRecord => _todayHealthRecord;
+
+  // 兼容性 getter（为了支持 health_screen.dart）
+  HealthRecord? get todayRecord => _todayHealthRecord;
 
   // 任务数据
   Map<String, bool> get todayCheckins => _todayCheckins;
-  int get completedTasksToday => _todayCheckins.values.where((v) => v).length;
-  int get totalTasksToday => _todayCheckins.length;
-  double get completionRate => completedTasksToday / totalTasksToday;
+  List<Task> get todayTasks => _todayTasks;
+  int get completedTasksToday =>
+      _todayTasks.where((task) => task.completed).length;
+  int get totalTasksToday => _todayTasks.length;
+  double get completionRate =>
+      totalTasksToday > 0 ? completedTasksToday / totalTasksToday : 0.0;
 
   // 积分数据
   int get totalPoints => _currentUser?.totalPoints ?? 0;
@@ -127,82 +141,6 @@ class AppStateProvider extends ChangeNotifier {
     ),
     LeaderboardUser(rank: 5, name: '活力青春', smartAge: 33, coins: 1920),
   ];
-
-  // === 模拟任务数据 ===
-  List<TaskItem> get todayTasks => [
-    TaskItem(
-      id: 1,
-      title: '喝水打卡',
-      description: '今日喝水2.5升',
-      type: 'water',
-      pointsReward: 10,
-      completed: _todayCheckins['water'] ?? false,
-    ),
-    TaskItem(
-      id: 2,
-      title: '运动打卡',
-      description: '运动30分钟',
-      type: 'exercise',
-      pointsReward: 20,
-      completed: _todayCheckins['exercise'] ?? false,
-    ),
-    TaskItem(
-      id: 3,
-      title: '冥想打卡',
-      description: '冥想10分钟',
-      type: 'meditation',
-      pointsReward: 15,
-      completed: _todayCheckins['meditation'] ?? false,
-    ),
-    TaskItem(
-      id: 4,
-      title: '睡眠打卡',
-      description: '睡眠8小时',
-      type: 'sleep',
-      pointsReward: 15,
-      completed: _todayCheckins['sleep'] ?? false,
-    ),
-    TaskItem(
-      id: 5,
-      title: '营养打卡',
-      description: '健康饮食',
-      type: 'nutrition',
-      pointsReward: 10,
-      completed: _todayCheckins['nutrition'] ?? false,
-    ),
-    TaskItem(
-      id: 6,
-      title: '护肤打卡',
-      description: '护肤保养',
-      type: 'skincare',
-      pointsReward: 10,
-      completed: _todayCheckins['skincare'] ?? false,
-    ),
-    TaskItem(
-      id: 7,
-      title: '补剂打卡',
-      description: '服用营养补剂',
-      type: 'supplement',
-      pointsReward: 15,
-      completed: _todayCheckins['supplement'] ?? false,
-    ),
-    TaskItem(
-      id: 8,
-      title: '社交打卡',
-      description: '社交互动',
-      type: 'social',
-      pointsReward: 10,
-      completed: _todayCheckins['social'] ?? false,
-    ),
-  ];
-
-  // === 模拟健康记录 ===
-  HealthRecordItem? get todayRecord => HealthRecordItem(
-    steps: _todaySteps,
-    water: _todayWater,
-    sleepHours: _todaySleep,
-    exerciseMinutes: _todayExercise,
-  );
 
   // === 构造函数 ===
   AppStateProvider() {
@@ -230,20 +168,36 @@ class AppStateProvider extends ChangeNotifier {
 
   Future<void> _loadUserData() async {
     try {
+      debugPrint('🔍 开始加载用户数据...');
+
+      // 首先从数据库加载
+      debugPrint('🔍 正在从数据库查询用户...');
       _currentUser = await _dbService.getUser();
+      debugPrint('🔍 数据库返回用户: ${_currentUser?.name}');
 
       if (_currentUser == null) {
+        debugPrint('🔍 数据库无用户，尝试从SharedPreferences加载...');
         _currentUser = await _dbService.loadUserFromPreferences();
+        debugPrint('🔍 SharedPreferences返回用户: ${_currentUser?.name}');
 
         if (_currentUser != null) {
+          debugPrint('🔍 找到SharedPreferences用户，保存到数据库...');
           await _dbService.saveUser(_currentUser!);
           _hasUser = true;
+          debugPrint('✅ 用户已保存到数据库');
+        } else {
+          debugPrint('❌ SharedPreferences中也没有用户数据');
         }
       } else {
         _hasUser = true;
+        debugPrint('✅ 从数据库成功加载用户');
       }
+
+      debugPrint(
+        '🔍 最终用户状态: hasUser=$_hasUser, currentUser=${_currentUser?.name}',
+      );
     } catch (e) {
-      debugPrint('加载用户数据失败: $e');
+      debugPrint('❌ 加载用户数据失败: $e');
       _hasUser = false;
       _currentUser = null;
     }
@@ -255,10 +209,22 @@ class AppStateProvider extends ChangeNotifier {
     final savedDate = prefs.getString('last_data_date');
 
     if (savedDate == today) {
-      _todaySteps = prefs.getInt('today_steps') ?? 0;
-      _todayWater = prefs.getDouble('today_water') ?? 0.0;
-      _todaySleep = prefs.getInt('today_sleep') ?? 0;
-      _todayExercise = prefs.getInt('today_exercise') ?? 0;
+      // 从SharedPreferences加载健康数据
+      final steps = prefs.getInt('today_steps') ?? 0;
+      final water = prefs.getDouble('today_water') ?? 0.0;
+      final sleep = prefs.getInt('today_sleep') ?? 0;
+      final exercise = prefs.getInt('today_exercise') ?? 0;
+
+      // 创建统一的健康记录
+      _todayHealthRecord = HealthRecord(
+        userId: _currentUser?.id ?? 0,
+        date: DateTime.now(),
+        steps: steps,
+        water: water,
+        sleepHours: sleep,
+        exerciseMinutes: exercise,
+        createdAt: DateTime.now(),
+      );
 
       for (String key in _todayCheckins.keys) {
         _todayCheckins[key] = prefs.getBool('checkin_$key') ?? false;
@@ -267,7 +233,163 @@ class AppStateProvider extends ChangeNotifier {
       await _resetDailyData();
     }
 
-    _calculateHealthScore();
+    // 加载今日任务
+    await _loadTodayTasks();
+
+    // 重新计算健康分数
+    _updateHealthScore();
+  }
+
+  Future<void> _loadTodayTasks() async {
+    try {
+      debugPrint('🔍 开始加载今日任务...');
+      debugPrint('🔍 当前用户: ${_currentUser?.name}');
+      debugPrint('🔍 用户ID: ${_currentUser?.id}');
+
+      if (_currentUser?.id != null) {
+        debugPrint('🔍 正在从数据库查询任务...');
+        _todayTasks = await _dbService.getTasks(
+          _currentUser!.id!,
+          DateTime.now(),
+        );
+        debugPrint('🔍 数据库返回任务数量: ${_todayTasks.length}');
+
+        // 如果数据库中没有今日任务，创建默认任务
+        if (_todayTasks.isEmpty) {
+          debugPrint('🔍 数据库无任务，正在创建默认任务...');
+          await _createDefaultTasks();
+          debugPrint('🔍 默认任务创建完成，重新查询...');
+          _todayTasks = await _dbService.getTasks(
+            _currentUser!.id!,
+            DateTime.now(),
+          );
+          debugPrint('🔍 重新查询后任务数量: ${_todayTasks.length}');
+        }
+      } else {
+        debugPrint('🔍 用户ID为空，无法加载任务');
+        _todayTasks = [];
+      }
+
+      debugPrint('🔍 最终任务列表: ${_todayTasks.map((t) => t.title).toList()}');
+    } catch (e) {
+      debugPrint('❌ 加载今日任务失败: $e');
+      debugPrint('❌ 错误详情: ${e.toString()}');
+      _todayTasks = [];
+
+      // 创建默认任务作为后备
+      try {
+        debugPrint('🔍 尝试创建后备默认任务...');
+        await _createDefaultTasks();
+      } catch (e2) {
+        debugPrint('❌ 创建后备任务也失败: $e2');
+      }
+    }
+  }
+
+  Future<void> _createDefaultTasks() async {
+    debugPrint('🔍 开始创建默认任务...');
+
+    if (_currentUser?.id == null) {
+      debugPrint('❌ 用户ID为空，无法创建默认任务');
+      return;
+    }
+
+    debugPrint('🔍 用户ID: ${_currentUser!.id}');
+    final today = DateTime.now();
+    debugPrint('🔍 目标日期: $today');
+
+    final defaultTasks = [
+      Task(
+        userId: _currentUser!.id!,
+        type: 'water',
+        title: '喝水打卡',
+        description: '今日喝水2.5升',
+        targetDate: today,
+        pointsReward: 10,
+        createdAt: DateTime.now(),
+      ),
+      Task(
+        userId: _currentUser!.id!,
+        type: 'exercise',
+        title: '运动打卡',
+        description: '运动30分钟',
+        targetDate: today,
+        pointsReward: 20,
+        createdAt: DateTime.now(),
+      ),
+      Task(
+        userId: _currentUser!.id!,
+        type: 'meditation',
+        title: '冥想打卡',
+        description: '冥想10分钟',
+        targetDate: today,
+        pointsReward: 15,
+        createdAt: DateTime.now(),
+      ),
+      Task(
+        userId: _currentUser!.id!,
+        type: 'sleep',
+        title: '睡眠打卡',
+        description: '睡眠8小时',
+        targetDate: today,
+        pointsReward: 15,
+        createdAt: DateTime.now(),
+      ),
+      Task(
+        userId: _currentUser!.id!,
+        type: 'nutrition',
+        title: '营养打卡',
+        description: '健康饮食',
+        targetDate: today,
+        pointsReward: 10,
+        createdAt: DateTime.now(),
+      ),
+      Task(
+        userId: _currentUser!.id!,
+        type: 'skincare',
+        title: '护肤打卡',
+        description: '护肤保养',
+        targetDate: today,
+        pointsReward: 10,
+        createdAt: DateTime.now(),
+      ),
+      Task(
+        userId: _currentUser!.id!,
+        type: 'supplement',
+        title: '补剂打卡',
+        description: '服用营养补剂',
+        targetDate: today,
+        pointsReward: 15,
+        createdAt: DateTime.now(),
+      ),
+      Task(
+        userId: _currentUser!.id!,
+        type: 'social',
+        title: '社交打卡',
+        description: '社交互动',
+        targetDate: today,
+        pointsReward: 10,
+        createdAt: DateTime.now(),
+      ),
+    ];
+
+    debugPrint('🔍 准备插入 ${defaultTasks.length} 个默认任务');
+
+    // 保存到数据库
+    int successCount = 0;
+    for (int i = 0; i < defaultTasks.length; i++) {
+      final task = defaultTasks[i];
+      try {
+        debugPrint('🔍 正在插入任务 ${i + 1}: ${task.title}');
+        await _dbService.insertTask(task);
+        successCount++;
+        debugPrint('✅ 任务插入成功: ${task.title}');
+      } catch (e) {
+        debugPrint('❌ 插入任务失败: ${task.title}, 错误: $e');
+      }
+    }
+
+    debugPrint('🔍 成功插入 $successCount 个任务，共 ${defaultTasks.length} 个');
   }
 
   Future<void> _loadPointsData() async {
@@ -340,29 +462,45 @@ class AppStateProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final today = DateTime.now().toIso8601String().split('T')[0];
 
+      // 确保有健康记录对象
+      _todayHealthRecord ??= HealthRecord(
+        userId: _currentUser?.id ?? 0,
+        date: DateTime.now(),
+        steps: 0,
+        water: 0.0,
+        sleepHours: 0,
+        exerciseMinutes: 0,
+        createdAt: DateTime.now(),
+      );
+
+      // 更新数据
       if (steps != null) {
-        _todaySteps = steps;
+        _todayHealthRecord = _todayHealthRecord!.copyWith(steps: steps);
         await prefs.setInt('today_steps', steps);
       }
 
       if (water != null) {
-        _todayWater = water;
+        _todayHealthRecord = _todayHealthRecord!.copyWith(water: water);
         await prefs.setDouble('today_water', water);
       }
 
       if (sleepHours != null) {
-        _todaySleep = sleepHours;
+        _todayHealthRecord = _todayHealthRecord!.copyWith(
+          sleepHours: sleepHours,
+        );
         await prefs.setInt('today_sleep', sleepHours);
       }
 
       if (exerciseMinutes != null) {
-        _todayExercise = exerciseMinutes;
+        _todayHealthRecord = _todayHealthRecord!.copyWith(
+          exerciseMinutes: exerciseMinutes,
+        );
         await prefs.setInt('today_exercise', exerciseMinutes);
       }
 
       await prefs.setString('last_data_date', today);
 
-      _calculateHealthScore();
+      _updateHealthScore();
       await _checkHealthAchievements();
 
       notifyListeners();
@@ -373,42 +511,52 @@ class AppStateProvider extends ChangeNotifier {
     }
   }
 
-  void _calculateHealthScore() {
+  void _updateHealthScore() {
+    if (_todayHealthRecord == null) return;
+
     int score = 0;
+    final steps = _todayHealthRecord!.steps ?? 0;
+    final water = _todayHealthRecord!.water ?? 0.0;
+    final sleep = _todayHealthRecord!.sleepHours ?? 0;
+    final exercise = _todayHealthRecord!.exerciseMinutes ?? 0;
 
-    if (_todaySteps >= 10000) {
+    // 步数评分
+    if (steps >= 10000) {
       score += 20;
-    } else if (_todaySteps >= 8000) {
+    } else if (steps >= 8000) {
       score += 15;
-    } else if (_todaySteps >= 5000) {
+    } else if (steps >= 5000) {
       score += 10;
-    } else if (_todaySteps >= 3000) {
+    } else if (steps >= 3000) {
       score += 5;
     }
 
-    if (_todayWater >= 2.5) {
+    // 饮水评分
+    if (water >= 2.5) {
       score += 15;
-    } else if (_todayWater >= 2.0) {
+    } else if (water >= 2.0) {
       score += 10;
-    } else if (_todayWater >= 1.5) {
+    } else if (water >= 1.5) {
       score += 5;
     }
 
-    if (_todaySleep >= 7 && _todaySleep <= 9) {
+    // 睡眠评分
+    if (sleep >= 7 && sleep <= 9) {
       score += 20;
-    } else if (_todaySleep >= 6 && _todaySleep <= 10) {
+    } else if (sleep >= 6 && sleep <= 10) {
       score += 15;
-    } else if (_todaySleep >= 5) {
+    } else if (sleep >= 5) {
       score += 10;
     }
 
-    if (_todayExercise >= 60) {
+    // 运动评分
+    if (exercise >= 60) {
       score += 20;
-    } else if (_todayExercise >= 30) {
+    } else if (exercise >= 30) {
       score += 15;
-    } else if (_todayExercise >= 15) {
+    } else if (exercise >= 15) {
       score += 10;
-    } else if (_todayExercise > 0) {
+    } else if (exercise > 0) {
       score += 5;
     }
 
@@ -419,18 +567,30 @@ class AppStateProvider extends ChangeNotifier {
 
   Future<bool> completeTask(int taskId) async {
     try {
-      final task = todayTasks.firstWhere((t) => t.id == taskId);
+      final taskIndex = _todayTasks.indexWhere((t) => t.id == taskId);
+      if (taskIndex == -1) return false;
 
+      final task = _todayTasks[taskIndex];
       if (task.completed) return false;
 
-      final prefs = await SharedPreferences.getInstance();
+      // 更新数据库
+      final updatedTask = task.copyWith(
+        completed: true,
+        completedAt: DateTime.now(),
+      );
 
+      await _dbService.updateTask(updatedTask);
+
+      // 更新本地状态
+      _todayTasks[taskIndex] = updatedTask;
       _todayCheckins[task.type] = true;
+
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('checkin_${task.type}', true);
 
       await _addPoints(task.pointsReward, 'task', '完成任务：${task.title}');
 
-      _calculateHealthScore();
+      _updateHealthScore();
       notifyListeners();
       return true;
     } catch (e) {
@@ -441,18 +601,27 @@ class AppStateProvider extends ChangeNotifier {
 
   Future<bool> uncompleteTask(int taskId) async {
     try {
-      final task = todayTasks.firstWhere((t) => t.id == taskId);
+      final taskIndex = _todayTasks.indexWhere((t) => t.id == taskId);
+      if (taskIndex == -1) return false;
 
+      final task = _todayTasks[taskIndex];
       if (!task.completed) return false;
 
-      final prefs = await SharedPreferences.getInstance();
+      // 更新数据库
+      final updatedTask = task.copyWith(completed: false, completedAt: null);
 
+      await _dbService.updateTask(updatedTask);
+
+      // 更新本地状态
+      _todayTasks[taskIndex] = updatedTask;
       _todayCheckins[task.type] = false;
+
+      final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('checkin_${task.type}', false);
 
       await _addPoints(-task.pointsReward, 'task', '取消任务：${task.title}');
 
-      _calculateHealthScore();
+      _updateHealthScore();
       notifyListeners();
       return true;
     } catch (e) {
@@ -517,11 +686,16 @@ class AppStateProvider extends ChangeNotifier {
   }
 
   Future<void> _checkHealthAchievements() async {
-    if (_todaySteps >= 10000) {
+    if (_todayHealthRecord == null) return;
+
+    final steps = _todayHealthRecord!.steps ?? 0;
+    final water = _todayHealthRecord!.water ?? 0.0;
+
+    if (steps >= 10000) {
       await _addPoints(50, 'achievement', '步数达标奖励（10000步）');
     }
 
-    if (_todayWater >= 3.0) {
+    if (water >= 3.0) {
       await _addPoints(30, 'achievement', '饮水达标奖励（3升）');
     }
 
@@ -566,10 +740,16 @@ class AppStateProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().split('T')[0];
 
-    _todaySteps = 0;
-    _todayWater = 0.0;
-    _todaySleep = 0;
-    _todayExercise = 0;
+    // 重置健康记录
+    _todayHealthRecord = HealthRecord(
+      userId: _currentUser?.id ?? 0,
+      date: DateTime.now(),
+      steps: 0,
+      water: 0.0,
+      sleepHours: 0,
+      exerciseMinutes: 0,
+      createdAt: DateTime.now(),
+    );
 
     for (String key in _todayCheckins.keys) {
       _todayCheckins[key] = false;
@@ -582,7 +762,7 @@ class AppStateProvider extends ChangeNotifier {
     await prefs.setInt('today_exercise', 0);
     await prefs.setString('last_data_date', today);
 
-    _calculateHealthScore();
+    _updateHealthScore();
   }
 
   Future<void> resetTodayData() async {
@@ -592,65 +772,6 @@ class AppStateProvider extends ChangeNotifier {
 }
 
 // === 辅助类 ===
-class TaskItem {
-  final int id;
-  final String title;
-  final String description;
-  final String type;
-  final int pointsReward;
-  final bool completed;
-
-  TaskItem({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.type,
-    required this.pointsReward,
-    required this.completed,
-  });
-
-  String get iconData {
-    switch (type) {
-      case 'water':
-        return '💧';
-      case 'exercise':
-        return '🏃‍♂️';
-      case 'meditation':
-        return '🧘‍♀️';
-      case 'sleep':
-        return '😴';
-      case 'nutrition':
-        return '🥗';
-      case 'skincare':
-        return '🧴';
-      case 'supplement':
-        return '💊';
-      case 'social':
-        return '👥';
-      default:
-        return '✅';
-    }
-  }
-
-  String get statusDisplay {
-    return completed ? '已完成' : '待完成';
-  }
-}
-
-class HealthRecordItem {
-  final int? steps;
-  final double? water;
-  final int? sleepHours;
-  final int? exerciseMinutes;
-
-  HealthRecordItem({
-    this.steps,
-    this.water,
-    this.sleepHours,
-    this.exerciseMinutes,
-  });
-}
-
 class PointTransaction {
   final int points;
   final String type;
@@ -683,24 +804,6 @@ class PointTransaction {
         return '其他';
     }
   }
-}
-
-class Achievement {
-  final int id;
-  final String name;
-  final String desc;
-  final String icon;
-  final bool unlocked;
-  final String? date;
-
-  Achievement({
-    required this.id,
-    required this.name,
-    required this.desc,
-    required this.icon,
-    required this.unlocked,
-    this.date,
-  });
 }
 
 class LeaderboardUser {
