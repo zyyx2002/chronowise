@@ -9,6 +9,7 @@ class TaskProvider extends ChangeNotifier {
   List<Task> _todayTasks = [];
   bool _isLoading = false;
   String? _error;
+  int? _currentUserId; // 添加当前用户ID
 
   // === Getters ===
   List<Task> get todayTasks => _todayTasks;
@@ -32,6 +33,7 @@ class TaskProvider extends ChangeNotifier {
 
     print('🔍 TaskProvider: 开始加载今日任务, 用户ID: $userId');
 
+    _currentUserId = userId; // 保存当前用户ID
     _setLoading(true);
     _error = null;
 
@@ -52,7 +54,16 @@ class TaskProvider extends ChangeNotifier {
     try {
       print('🔍 TaskProvider: 完成任务 $taskId');
 
-      final success = await _taskRepository.completeTask(taskId);
+      // 检查是否有当前用户ID
+      if (_currentUserId == null) {
+        print('❌ TaskProvider: 当前用户ID为空');
+        return false;
+      }
+
+      final success = await _taskRepository.completeTask(
+        taskId,
+        _currentUserId!,
+      );
 
       if (success) {
         // 更新本地状态
@@ -81,7 +92,16 @@ class TaskProvider extends ChangeNotifier {
     try {
       print('🔍 TaskProvider: 取消完成任务 $taskId');
 
-      final success = await _taskRepository.uncompleteTask(taskId);
+      // 检查是否有当前用户ID
+      if (_currentUserId == null) {
+        print('❌ TaskProvider: 当前用户ID为空');
+        return false;
+      }
+
+      final success = await _taskRepository.uncompleteTask(
+        taskId,
+        _currentUserId!,
+      );
 
       if (success) {
         // 更新本地状态
@@ -130,6 +150,7 @@ class TaskProvider extends ChangeNotifier {
   void clearTasks() {
     _todayTasks.clear();
     _error = null;
+    _currentUserId = null; // 清理用户ID
     notifyListeners();
   }
 

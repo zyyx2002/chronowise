@@ -30,16 +30,21 @@ class TaskRepository {
   }
 
   // 完成任务
-  Future<bool> completeTask(int taskId) async {
+  Future<bool> completeTask(int taskId, int userId) async {
     try {
-      // 先从数据库获取任务
-      final tasks = await _dbService.getTasks(0, DateTime.now()); // 临时方案
+      print('🔍 TaskRepository: 尝试完成任务 ID: $taskId, 用户ID: $userId');
+
+      // 使用正确的用户ID获取任务
+      final tasks = await _dbService.getTasks(userId, DateTime.now());
       final task = tasks.firstWhere(
         (t) => t.id == taskId,
         orElse: () => throw Exception('Task not found'),
       );
 
-      if (task.completed) return false;
+      if (task.completed) {
+        print('🔍 TaskRepository: 任务已经完成了');
+        return false;
+      }
 
       final updatedTask = task.copyWith(
         completed: true,
@@ -47,6 +52,7 @@ class TaskRepository {
       );
 
       await _dbService.updateTask(updatedTask);
+      print('✅ TaskRepository: 任务完成成功');
       return true;
     } catch (e) {
       print('❌ TaskRepository: 完成任务失败: $e');
@@ -55,20 +61,26 @@ class TaskRepository {
   }
 
   // 取消完成任务
-  Future<bool> uncompleteTask(int taskId) async {
+  Future<bool> uncompleteTask(int taskId, int userId) async {
     try {
-      // 先从数据库获取任务
-      final tasks = await _dbService.getTasks(0, DateTime.now()); // 临时方案
+      print('🔍 TaskRepository: 尝试取消任务 ID: $taskId, 用户ID: $userId');
+
+      // 使用正确的用户ID获取任务
+      final tasks = await _dbService.getTasks(userId, DateTime.now());
       final task = tasks.firstWhere(
         (t) => t.id == taskId,
         orElse: () => throw Exception('Task not found'),
       );
 
-      if (!task.completed) return false;
+      if (!task.completed) {
+        print('🔍 TaskRepository: 任务还没有完成');
+        return false;
+      }
 
       final updatedTask = task.copyWith(completed: false, completedAt: null);
 
       await _dbService.updateTask(updatedTask);
+      print('✅ TaskRepository: 任务取消成功');
       return true;
     } catch (e) {
       print('❌ TaskRepository: 取消任务失败: $e');
