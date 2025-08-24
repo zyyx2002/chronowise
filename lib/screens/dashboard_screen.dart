@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state_provider.dart';
+import '../providers/task_provider.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppStateProvider>(
-      builder: (context, provider, child) {
+    return Consumer2<AppStateProvider, TaskProvider>(
+      builder: (context, appProvider, taskProvider, child) {
         return Scaffold(
           appBar: AppBar(
             title: const Text('仪表板'),
@@ -21,13 +22,13 @@ class DashboardScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildWelcomeCard(provider),
+                _buildWelcomeCard(appProvider),
                 const SizedBox(height: 16),
-                _buildHealthScoreCard(provider),
+                _buildHealthScoreCard(appProvider),
                 const SizedBox(height: 16),
-                _buildTodayProgress(provider),
+                _buildTodayProgress(appProvider, taskProvider),
                 const SizedBox(height: 16),
-                _buildQuickActions(provider, context),
+                _buildQuickActions(appProvider, context),
               ],
             ),
           ),
@@ -45,7 +46,7 @@ class DashboardScreen extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 30,
-              backgroundColor: Colors.blue.withOpacity(0.1),
+              backgroundColor: Colors.blue.withValues(alpha: 0.1),
               child: const Icon(Icons.person, size: 30, color: Colors.blue),
             ),
             const SizedBox(width: 16),
@@ -133,7 +134,10 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTodayProgress(AppStateProvider provider) {
+  Widget _buildTodayProgress(
+    AppStateProvider appProvider,
+    TaskProvider taskProvider,
+  ) {
     return Card(
       elevation: 4,
       child: Padding(
@@ -148,15 +152,15 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _buildProgressItem(
               '任务完成',
-              provider.completedTasksToday,
-              provider.totalTasksToday,
+              taskProvider.completedTasksToday,
+              taskProvider.totalTasksToday,
               Colors.blue,
               Icons.assignment_turned_in,
             ),
             const SizedBox(height: 12),
             _buildProgressItem(
               '步数',
-              provider.todaySteps,
+              appProvider.todaySteps,
               10000,
               Colors.green,
               Icons.directions_walk,
@@ -164,7 +168,7 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildProgressItem(
               '饮水量',
-              (provider.todayWater * 1000).toInt(),
+              (appProvider.todayWater * 1000).toInt(),
               2500,
               Colors.lightBlue,
               Icons.local_drink,
@@ -173,7 +177,7 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 12),
             _buildProgressItem(
               '运动时间',
-              provider.todayExercise,
+              appProvider.todayExercise,
               60,
               Colors.orange,
               Icons.fitness_center,
@@ -296,7 +300,7 @@ class DashboardScreen extends StatelessWidget {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(30),
             ),
             child: Icon(icon, color: color, size: 30),

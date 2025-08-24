@@ -1,33 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state_provider.dart';
+import '../providers/task_provider.dart';
 
 class MyScreen extends StatelessWidget {
   const MyScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<AppStateProvider>(
-      builder: (context, provider, child) {
+    return Consumer2<AppStateProvider, TaskProvider>(
+      builder: (context, appProvider, taskProvider, child) {
         return Scaffold(
           body: Container(
             color: const Color(0xFFF9FAFB),
             child: Column(
               children: [
-                _buildProfileHeader(provider),
+                _buildProfileHeader(appProvider),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                     child: Column(
                       children: [
                         const SizedBox(height: 32),
-                        _buildAchievementsCard(provider),
+                        _buildAchievementsCard(appProvider),
                         const SizedBox(height: 24),
-                        _buildMyDataCard(provider),
+                        _buildMyDataCard(appProvider, taskProvider),
                         const SizedBox(height: 24),
                         _buildFunctionMenuCard(),
                         const SizedBox(height: 24),
-                        _buildLevelProgressCard(provider),
+                        _buildLevelProgressCard(appProvider),
                       ],
                     ),
                   ),
@@ -276,7 +277,7 @@ class MyScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      achievement.iconData, // ✅ 修复：使用 iconData
+                      achievement.iconData,
                       style: TextStyle(
                         fontSize: 24,
                         color: achievement.unlocked ? null : Colors.grey[400],
@@ -284,7 +285,7 @@ class MyScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      achievement.title, // ✅ 修复：使用 title
+                      achievement.title,
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -298,7 +299,7 @@ class MyScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      achievement.description, // ✅ 修复：使用 description
+                      achievement.description,
                       style: const TextStyle(
                         fontSize: 10,
                         color: Color(0xFF6B7280),
@@ -312,7 +313,7 @@ class MyScreen extends StatelessWidget {
                       Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
-                          '${achievement.unlockedDate!.month}/${achievement.unlockedDate!.day}', // ✅ 修复：使用 unlockedDate
+                          '${achievement.unlockedDate!.month}/${achievement.unlockedDate!.day}',
                           style: const TextStyle(
                             fontSize: 8,
                             color: Color(0xFF9CA3AF),
@@ -343,7 +344,10 @@ class MyScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMyDataCard(AppStateProvider provider) {
+  Widget _buildMyDataCard(
+    AppStateProvider appProvider,
+    TaskProvider taskProvider,
+  ) {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -374,7 +378,7 @@ class MyScreen extends StatelessWidget {
               Expanded(
                 child: _buildDataItem(
                   '健康评分',
-                  '${provider.todayHealthScore}/100',
+                  '${appProvider.todayHealthScore}/100',
                   '🎯',
                   const Color(0xFF3B82F6),
                 ),
@@ -383,7 +387,7 @@ class MyScreen extends StatelessWidget {
               Expanded(
                 child: _buildDataItem(
                   '今日步数',
-                  '${provider.todaySteps}',
+                  '${appProvider.todaySteps}',
                   '👟',
                   const Color(0xFF10B981),
                 ),
@@ -396,7 +400,7 @@ class MyScreen extends StatelessWidget {
               Expanded(
                 child: _buildDataItem(
                   '饮水量',
-                  '${provider.todayWater.toStringAsFixed(1)}L',
+                  '${appProvider.todayWater.toStringAsFixed(1)}L',
                   '💧',
                   const Color(0xFF06B6D4),
                 ),
@@ -405,7 +409,7 @@ class MyScreen extends StatelessWidget {
               Expanded(
                 child: _buildDataItem(
                   '运动时长',
-                  '${provider.todayExercise}分钟',
+                  '${appProvider.todayExercise}分钟',
                   '🏃‍♂️',
                   const Color(0xFFF59E0B),
                 ),
@@ -436,7 +440,7 @@ class MyScreen extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '${provider.completedTasksToday}/${provider.totalTasksToday}',
+                        '${taskProvider.completedTasksToday}/${taskProvider.totalTasksToday}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF6B7280),
@@ -446,7 +450,7 @@ class MyScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '${(provider.completionRate * 100).toInt()}%',
+                  '${(taskProvider.completionRate * 100).toInt()}%',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

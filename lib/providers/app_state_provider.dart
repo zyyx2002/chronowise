@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/user.dart';
-import '../models/task.dart';
 import '../models/achievement.dart';
 import '../models/health_record.dart';
 import '../services/database_service.dart';
@@ -15,20 +14,6 @@ class AppStateProvider extends ChangeNotifier {
   // === 健康数据（统一管理）===
   HealthRecord? _todayHealthRecord;
   int _todayHealthScore = 0; // 额外存储健康分数
-
-  // === 任务数据 ===
-  final Map<String, bool> _todayCheckins = {
-    'water': false,
-    'exercise': false,
-    'sleep': false,
-    'meditation': false,
-    'nutrition': false,
-    'skincare': false,
-    'supplement': false,
-    'social': false,
-  };
-
-  List<Task> _todayTasks = [];
 
   // === 积分系统 ===
   List<PointTransaction> _pointHistory = [];
@@ -111,15 +96,6 @@ class AppStateProvider extends ChangeNotifier {
 
   // 兼容性 getter（为了支持 health_screen.dart）
   HealthRecord? get todayRecord => _todayHealthRecord;
-
-  // 任务数据
-  Map<String, bool> get todayCheckins => _todayCheckins;
-  List<Task> get todayTasks => _todayTasks;
-  int get completedTasksToday =>
-      _todayTasks.where((task) => task.completed).length;
-  int get totalTasksToday => _todayTasks.length;
-  double get completionRate =>
-      totalTasksToday > 0 ? completedTasksToday / totalTasksToday : 0.0;
 
   // 积分数据
   int get totalPoints => _currentUser?.totalPoints ?? 0;
@@ -225,171 +201,12 @@ class AppStateProvider extends ChangeNotifier {
         exerciseMinutes: exercise,
         createdAt: DateTime.now(),
       );
-
-      for (String key in _todayCheckins.keys) {
-        _todayCheckins[key] = prefs.getBool('checkin_$key') ?? false;
-      }
     } else {
       await _resetDailyData();
     }
 
-    // 加载今日任务
-    await _loadTodayTasks();
-
     // 重新计算健康分数
     _updateHealthScore();
-  }
-
-  Future<void> _loadTodayTasks() async {
-    try {
-      debugPrint('🔍 开始加载今日任务...');
-      debugPrint('🔍 当前用户: ${_currentUser?.name}');
-      debugPrint('🔍 用户ID: ${_currentUser?.id}');
-
-      if (_currentUser?.id != null) {
-        debugPrint('🔍 正在从数据库查询任务...');
-        _todayTasks = await _dbService.getTasks(
-          _currentUser!.id!,
-          DateTime.now(),
-        );
-        debugPrint('🔍 数据库返回任务数量: ${_todayTasks.length}');
-
-        // 如果数据库中没有今日任务，创建默认任务
-        if (_todayTasks.isEmpty) {
-          debugPrint('🔍 数据库无任务，正在创建默认任务...');
-          await _createDefaultTasks();
-          debugPrint('🔍 默认任务创建完成，重新查询...');
-          _todayTasks = await _dbService.getTasks(
-            _currentUser!.id!,
-            DateTime.now(),
-          );
-          debugPrint('🔍 重新查询后任务数量: ${_todayTasks.length}');
-        }
-      } else {
-        debugPrint('🔍 用户ID为空，无法加载任务');
-        _todayTasks = [];
-      }
-
-      debugPrint('🔍 最终任务列表: ${_todayTasks.map((t) => t.title).toList()}');
-    } catch (e) {
-      debugPrint('❌ 加载今日任务失败: $e');
-      debugPrint('❌ 错误详情: ${e.toString()}');
-      _todayTasks = [];
-
-      // 创建默认任务作为后备
-      try {
-        debugPrint('🔍 尝试创建后备默认任务...');
-        await _createDefaultTasks();
-      } catch (e2) {
-        debugPrint('❌ 创建后备任务也失败: $e2');
-      }
-    }
-  }
-
-  Future<void> _createDefaultTasks() async {
-    debugPrint('🔍 开始创建默认任务...');
-
-    if (_currentUser?.id == null) {
-      debugPrint('❌ 用户ID为空，无法创建默认任务');
-      return;
-    }
-
-    debugPrint('🔍 用户ID: ${_currentUser!.id}');
-    final today = DateTime.now();
-    debugPrint('🔍 目标日期: $today');
-
-    final defaultTasks = [
-      Task(
-        userId: _currentUser!.id!,
-        type: 'water',
-        title: '喝水打卡',
-        description: '今日喝水2.5升',
-        targetDate: today,
-        pointsReward: 10,
-        createdAt: DateTime.now(),
-      ),
-      Task(
-        userId: _currentUser!.id!,
-        type: 'exercise',
-        title: '运动打卡',
-        description: '运动30分钟',
-        targetDate: today,
-        pointsReward: 20,
-        createdAt: DateTime.now(),
-      ),
-      Task(
-        userId: _currentUser!.id!,
-        type: 'meditation',
-        title: '冥想打卡',
-        description: '冥想10分钟',
-        targetDate: today,
-        pointsReward: 15,
-        createdAt: DateTime.now(),
-      ),
-      Task(
-        userId: _currentUser!.id!,
-        type: 'sleep',
-        title: '睡眠打卡',
-        description: '睡眠8小时',
-        targetDate: today,
-        pointsReward: 15,
-        createdAt: DateTime.now(),
-      ),
-      Task(
-        userId: _currentUser!.id!,
-        type: 'nutrition',
-        title: '营养打卡',
-        description: '健康饮食',
-        targetDate: today,
-        pointsReward: 10,
-        createdAt: DateTime.now(),
-      ),
-      Task(
-        userId: _currentUser!.id!,
-        type: 'skincare',
-        title: '护肤打卡',
-        description: '护肤保养',
-        targetDate: today,
-        pointsReward: 10,
-        createdAt: DateTime.now(),
-      ),
-      Task(
-        userId: _currentUser!.id!,
-        type: 'supplement',
-        title: '补剂打卡',
-        description: '服用营养补剂',
-        targetDate: today,
-        pointsReward: 15,
-        createdAt: DateTime.now(),
-      ),
-      Task(
-        userId: _currentUser!.id!,
-        type: 'social',
-        title: '社交打卡',
-        description: '社交互动',
-        targetDate: today,
-        pointsReward: 10,
-        createdAt: DateTime.now(),
-      ),
-    ];
-
-    debugPrint('🔍 准备插入 ${defaultTasks.length} 个默认任务');
-
-    // 保存到数据库
-    int successCount = 0;
-    for (int i = 0; i < defaultTasks.length; i++) {
-      final task = defaultTasks[i];
-      try {
-        debugPrint('🔍 正在插入任务 ${i + 1}: ${task.title}');
-        await _dbService.insertTask(task);
-        successCount++;
-        debugPrint('✅ 任务插入成功: ${task.title}');
-      } catch (e) {
-        debugPrint('❌ 插入任务失败: ${task.title}, 错误: $e');
-      }
-    }
-
-    debugPrint('🔍 成功插入 $successCount 个任务，共 ${defaultTasks.length} 个');
   }
 
   Future<void> _loadPointsData() async {
@@ -560,74 +377,9 @@ class AppStateProvider extends ChangeNotifier {
       score += 5;
     }
 
-    score += (completedTasksToday * 3).clamp(0, 25);
+    // 🆕 移除了任务相关的评分：score += (completedTasksToday * 3).clamp(0, 25);
 
     _todayHealthScore = score.clamp(0, 100);
-  }
-
-  Future<bool> completeTask(int taskId) async {
-    try {
-      final taskIndex = _todayTasks.indexWhere((t) => t.id == taskId);
-      if (taskIndex == -1) return false;
-
-      final task = _todayTasks[taskIndex];
-      if (task.completed) return false;
-
-      // 更新数据库
-      final updatedTask = task.copyWith(
-        completed: true,
-        completedAt: DateTime.now(),
-      );
-
-      await _dbService.updateTask(updatedTask);
-
-      // 更新本地状态
-      _todayTasks[taskIndex] = updatedTask;
-      _todayCheckins[task.type] = true;
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('checkin_${task.type}', true);
-
-      await _addPoints(task.pointsReward, 'task', '完成任务：${task.title}');
-
-      _updateHealthScore();
-      notifyListeners();
-      return true;
-    } catch (e) {
-      debugPrint('完成任务失败: $e');
-      return false;
-    }
-  }
-
-  Future<bool> uncompleteTask(int taskId) async {
-    try {
-      final taskIndex = _todayTasks.indexWhere((t) => t.id == taskId);
-      if (taskIndex == -1) return false;
-
-      final task = _todayTasks[taskIndex];
-      if (!task.completed) return false;
-
-      // 更新数据库
-      final updatedTask = task.copyWith(completed: false, completedAt: null);
-
-      await _dbService.updateTask(updatedTask);
-
-      // 更新本地状态
-      _todayTasks[taskIndex] = updatedTask;
-      _todayCheckins[task.type] = false;
-
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('checkin_${task.type}', false);
-
-      await _addPoints(-task.pointsReward, 'task', '取消任务：${task.title}');
-
-      _updateHealthScore();
-      notifyListeners();
-      return true;
-    } catch (e) {
-      debugPrint('取消任务失败: $e');
-      return false;
-    }
   }
 
   Future<void> _addPoints(int points, String type, String description) async {
@@ -750,11 +502,6 @@ class AppStateProvider extends ChangeNotifier {
       exerciseMinutes: 0,
       createdAt: DateTime.now(),
     );
-
-    for (String key in _todayCheckins.keys) {
-      _todayCheckins[key] = false;
-      await prefs.setBool('checkin_$key', false);
-    }
 
     await prefs.setInt('today_steps', 0);
     await prefs.setDouble('today_water', 0.0);

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'providers/app_state_provider.dart';
+import 'providers/task_provider.dart'; // 🆕 添加
+import 'providers/health_provider.dart'; // 🆕 添加这行import
 import 'screens/welcome_screen.dart';
 import 'screens/main_screen.dart';
 
@@ -13,8 +15,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (context) => AppStateProvider(),
+    return MultiProvider(
+      // 🆕 改为MultiProvider
+      providers: [
+        ChangeNotifierProvider(create: (context) => AppStateProvider()),
+        ChangeNotifierProvider(create: (context) => TaskProvider()), // 🆕 添加
+        ChangeNotifierProvider(
+          create: (context) => HealthProvider(),
+        ), // 🆕 在这里添加这行
+      ],
       child: MaterialApp(
         title: 'ChronoWise',
         theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),

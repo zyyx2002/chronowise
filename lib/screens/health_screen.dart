@@ -1,9 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state_provider.dart';
+import '../providers/health_provider.dart'; // 🆕 添加
 
-class HealthScreen extends StatelessWidget {
+class HealthScreen extends StatefulWidget {
+  // 🆕 改为StatefulWidget
   const HealthScreen({super.key});
+
+  @override
+  State<HealthScreen> createState() => _HealthScreenState();
+}
+
+class _HealthScreenState extends State<HealthScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 🆕 在组件初始化时加载健康数据
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadHealthDataIfNeeded();
+    });
+  }
+
+  void _loadHealthDataIfNeeded() {
+    final appProvider = Provider.of<AppStateProvider>(context, listen: false);
+    final healthProvider = Provider.of<HealthProvider>(context, listen: false);
+
+    // 如果有用户，则加载健康数据
+    if (appProvider.currentUser?.id != null) {
+      healthProvider.loadTodayHealthData(appProvider.currentUser!.id!);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -13,18 +39,26 @@ class HealthScreen extends StatelessWidget {
         backgroundColor: Colors.red,
         foregroundColor: Colors.white,
       ),
-      body: Consumer<AppStateProvider>(
-        builder: (context, provider, child) {
-          final record = provider.todayRecord;
+      body: Consumer2<AppStateProvider, HealthProvider>(
+        // 🆕 使用Consumer2
+        builder: (context, appProvider, healthProvider, child) {
+          final record = healthProvider.todayRecord; // 🆕 从HealthProvider获取
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHealthScore(provider.todayHealthScore),
+                _buildHealthScore(
+                  healthProvider.todayHealthScore,
+                ), // 🆕 使用HealthProvider
                 const SizedBox(height: 24),
-                _buildHealthMetrics(context, provider, record),
+                _buildHealthMetrics(
+                  context,
+                  appProvider,
+                  healthProvider,
+                  record,
+                ), // 🆕 传递两个Provider
                 const SizedBox(height: 24),
                 _buildHealthTips(),
               ],
@@ -90,7 +124,8 @@ class HealthScreen extends StatelessWidget {
 
   Widget _buildHealthMetrics(
     BuildContext context,
-    AppStateProvider provider,
+    AppStateProvider appProvider, // 🆕 保留用于获取用户ID
+    HealthProvider healthProvider, // 🆕 新增HealthProvider
     record,
   ) {
     return Column(
@@ -104,37 +139,55 @@ class HealthScreen extends StatelessWidget {
         _buildMetricCard(
           icon: Icons.directions_walk,
           title: '步数',
-          value: provider.todaySteps.toString(),
+          value: healthProvider.todaySteps.toString(), // 🆕 使用HealthProvider
           unit: '步',
           target: '8000',
-          onTap: () => _showStepsDialog(context, provider),
+          onTap: () => _showStepsDialog(
+            context,
+            appProvider,
+            healthProvider,
+          ), // 🆕 传递两个Provider
         ),
         const SizedBox(height: 12),
         _buildMetricCard(
           icon: Icons.water_drop,
           title: '饮水',
-          value: provider.todayWater.toStringAsFixed(1),
+          value: healthProvider.todayWater.toStringAsFixed(
+            1,
+          ), // 🆕 使用HealthProvider
           unit: 'L',
           target: '2.5',
-          onTap: () => _showWaterDialog(context, provider),
+          onTap: () => _showWaterDialog(
+            context,
+            appProvider,
+            healthProvider,
+          ), // 🆕 传递两个Provider
         ),
         const SizedBox(height: 12),
         _buildMetricCard(
           icon: Icons.bedtime,
           title: '睡眠',
-          value: provider.todaySleep.toString(),
+          value: healthProvider.todaySleep.toString(), // 🆕 使用HealthProvider
           unit: '小时',
           target: '8',
-          onTap: () => _showSleepDialog(context, provider),
+          onTap: () => _showSleepDialog(
+            context,
+            appProvider,
+            healthProvider,
+          ), // 🆕 传递两个Provider
         ),
         const SizedBox(height: 12),
         _buildMetricCard(
           icon: Icons.fitness_center,
           title: '运动',
-          value: provider.todayExercise.toString(),
+          value: healthProvider.todayExercise.toString(), // 🆕 使用HealthProvider
           unit: '分钟',
           target: '30',
-          onTap: () => _showExerciseDialog(context, provider),
+          onTap: () => _showExerciseDialog(
+            context,
+            appProvider,
+            healthProvider,
+          ), // 🆕 传递两个Provider
         ),
       ],
     );
@@ -258,7 +311,12 @@ class HealthScreen extends StatelessWidget {
     );
   }
 
-  void _showStepsDialog(BuildContext context, AppStateProvider provider) {
+  // 🆕 更新所有对话框方法，使用HealthProvider
+  void _showStepsDialog(
+    BuildContext context,
+    AppStateProvider appProvider,
+    HealthProvider healthProvider,
+  ) {
     final controller = TextEditingController();
 
     showDialog(
@@ -282,7 +340,11 @@ class HealthScreen extends StatelessWidget {
             onPressed: () async {
               final steps = int.tryParse(controller.text);
               if (steps != null && steps >= 0) {
-                await provider.updateHealthData(steps: steps);
+                final userId = appProvider.currentUser?.id ?? 0;
+                await healthProvider.updateHealthData(
+                  userId: userId,
+                  steps: steps,
+                );
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(
@@ -298,7 +360,11 @@ class HealthScreen extends StatelessWidget {
     );
   }
 
-  void _showWaterDialog(BuildContext context, AppStateProvider provider) {
+  void _showWaterDialog(
+    BuildContext context,
+    AppStateProvider appProvider,
+    HealthProvider healthProvider,
+  ) {
     final controller = TextEditingController();
 
     showDialog(
@@ -322,7 +388,11 @@ class HealthScreen extends StatelessWidget {
             onPressed: () async {
               final water = double.tryParse(controller.text);
               if (water != null && water >= 0) {
-                await provider.updateHealthData(water: water);
+                final userId = appProvider.currentUser?.id ?? 0;
+                await healthProvider.updateHealthData(
+                  userId: userId,
+                  water: water,
+                );
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(
@@ -338,7 +408,11 @@ class HealthScreen extends StatelessWidget {
     );
   }
 
-  void _showSleepDialog(BuildContext context, AppStateProvider provider) {
+  void _showSleepDialog(
+    BuildContext context,
+    AppStateProvider appProvider,
+    HealthProvider healthProvider,
+  ) {
     final controller = TextEditingController();
 
     showDialog(
@@ -362,7 +436,11 @@ class HealthScreen extends StatelessWidget {
             onPressed: () async {
               final sleep = int.tryParse(controller.text);
               if (sleep != null && sleep >= 0) {
-                await provider.updateHealthData(sleepHours: sleep);
+                final userId = appProvider.currentUser?.id ?? 0;
+                await healthProvider.updateHealthData(
+                  userId: userId,
+                  sleepHours: sleep,
+                );
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(
@@ -378,7 +456,11 @@ class HealthScreen extends StatelessWidget {
     );
   }
 
-  void _showExerciseDialog(BuildContext context, AppStateProvider provider) {
+  void _showExerciseDialog(
+    BuildContext context,
+    AppStateProvider appProvider,
+    HealthProvider healthProvider,
+  ) {
     final controller = TextEditingController();
 
     showDialog(
@@ -402,7 +484,11 @@ class HealthScreen extends StatelessWidget {
             onPressed: () async {
               final exercise = int.tryParse(controller.text);
               if (exercise != null && exercise >= 0) {
-                await provider.updateHealthData(exerciseMinutes: exercise);
+                final userId = appProvider.currentUser?.id ?? 0;
+                await healthProvider.updateHealthData(
+                  userId: userId,
+                  exerciseMinutes: exercise,
+                );
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(

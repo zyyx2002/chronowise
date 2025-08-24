@@ -1,15 +1,43 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/app_state_provider.dart';
-import '../models/task.dart'; // 🆕 添加 Task 模型导入
+import '../providers/task_provider.dart'; // 🆕 添加
+import '../models/task.dart';
 
-class TasksScreen extends StatelessWidget {
+class TasksScreen extends StatefulWidget {
+  // 🆕 改为StatefulWidget
   const TasksScreen({super.key});
 
   @override
+  State<TasksScreen> createState() => _TasksScreenState();
+}
+
+class _TasksScreenState extends State<TasksScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // 🆕 在组件初始化时加载任务
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadTasksIfNeeded();
+    });
+  }
+
+  void _loadTasksIfNeeded() {
+    final appProvider = Provider.of<AppStateProvider>(context, listen: false);
+    final taskProvider = Provider.of<TaskProvider>(context, listen: false);
+
+    // 如果有用户且任务列表为空，则加载任务
+    if (appProvider.currentUser?.id != null &&
+        taskProvider.todayTasks.isEmpty) {
+      taskProvider.loadTodayTasks(appProvider.currentUser!.id!);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Consumer<AppStateProvider>(
-      builder: (context, provider, child) {
+    return Consumer2<AppStateProvider, TaskProvider>(
+      // 🆕 使用Consumer2监听两个Provider
+      builder: (context, appProvider, taskProvider, child) {
         return Scaffold(
           body: Container(
             decoration: const BoxDecoration(
@@ -46,7 +74,7 @@ class TasksScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '${provider.completedTasksToday}/${provider.totalTasksToday}',
+                            '${taskProvider.completedTasksToday}/${taskProvider.totalTasksToday}', // 🆕 使用TaskProvider的数据
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -68,7 +96,8 @@ class TasksScreen extends StatelessWidget {
                       ),
                       child: FractionallySizedBox(
                         alignment: Alignment.centerLeft,
-                        widthFactor: provider.completionRate,
+                        widthFactor:
+                            taskProvider.completionRate, // 🆕 使用TaskProvider的数据
                         child: Container(
                           decoration: BoxDecoration(
                             color: Colors.white,
@@ -91,7 +120,22 @@ class TasksScreen extends StatelessWidget {
                           topRight: Radius.circular(30),
                         ),
                       ),
-                      child: provider.todayTasks.isEmpty
+                      child:
+                          taskProvider
+                              .isLoading // 🆕 显示加载状态
+                          ? const Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircularProgressIndicator(),
+                                  SizedBox(height: 16),
+                                  Text('正在加载任务...'),
+                                ],
+                              ),
+                            )
+                          : taskProvider
+                                .todayTasks
+                                .isEmpty // 🆕 使用TaskProvider的数据
                           ? const Center(
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -114,11 +158,17 @@ class TasksScreen extends StatelessWidget {
                             )
                           : ListView.builder(
                               padding: const EdgeInsets.all(20),
-                              itemCount: provider.todayTasks.length,
+                              itemCount: taskProvider
+                                  .todayTasks
+                                  .length, // 🆕 使用TaskProvider的数据
                               itemBuilder: (context, index) {
-                                final task = provider
-                                    .todayTasks[index]; // 🆕 现在是 Task 类型
-                                return _buildTaskCard(context, task, provider);
+                                final task = taskProvider
+                                    .todayTasks[index]; // 🆕 使用TaskProvider的数据
+                                return _buildTaskCard(
+                                  context,
+                                  task,
+                                  taskProvider,
+                                ); // 🆕 传递TaskProvider
                               },
                             ),
                     ),
@@ -132,11 +182,11 @@ class TasksScreen extends StatelessWidget {
     );
   }
 
-  // 🆕 修改 _buildTaskCard 方法接受 Task 类型
+  // 🆕 修改方法签名，使用TaskProvider而不是AppStateProvider
   Widget _buildTaskCard(
     BuildContext context,
     Task task,
-    AppStateProvider provider,
+    TaskProvider taskProvider, // 🆕 改为TaskProvider
   ) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -167,7 +217,7 @@ class TasksScreen extends StatelessWidget {
           ),
           child: Center(
             child: Text(
-              _getTaskIcon(task.type), // 🆕 使用 task.type 而不是 task.iconData
+              _getTaskIcon(task.type),
               style: const TextStyle(fontSize: 24),
             ),
           ),
@@ -216,7 +266,7 @@ class TasksScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    task.completed ? '已完成' : '待完成', // 🆕 直接使用 task.completed
+                    task.completed ? '已完成' : '待完成',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 10,
@@ -231,9 +281,11 @@ class TasksScreen extends StatelessWidget {
         trailing: IconButton(
           onPressed: () async {
             if (task.completed) {
-              await provider.uncompleteTask(task.id!); // 🆕 使用 task.id
+              await taskProvider.uncompleteTask(
+                task.id!,
+              ); // 🆕 使用TaskProvider的方法
             } else {
-              await provider.completeTask(task.id!); // 🆕 使用 task.id
+              await taskProvider.completeTask(task.id!); // 🆕 使用TaskProvider的方法
             }
           },
           icon: Icon(
@@ -246,7 +298,7 @@ class TasksScreen extends StatelessWidget {
     );
   }
 
-  // 🆕 添加获取任务图标的辅助方法
+  // 获取任务图标的辅助方法
   String _getTaskIcon(String type) {
     switch (type) {
       case 'water':
